@@ -5,7 +5,11 @@
     margin-top: 20px;
   }
   
-  video {
+  .video {
     max-width: 100%;
   }
   
+  .countdown {
+    font-size: 1.2rem;
+    margin-left: 20px;
+  }
