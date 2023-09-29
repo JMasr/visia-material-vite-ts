@@ -1,10 +1,19 @@
-import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import Header from "../components/Header";
 import { logEvent } from "../api/backendLog";
+import "../App.css";
 
 const Record = () => {
+  // Video recording logic
   const countdownDurationSeconds = 540; // 9 minutes in seconds
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState(countdownDurationSeconds);
@@ -191,19 +200,46 @@ const Record = () => {
     };
   }, []);
 
+  // Render the component
+  const [crdId, setCrdId] = useState<string | null>(null);
+  const [patientId, setPatientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/getRecordData", {
+          method: "GET",
+        });
+        if (!response.ok) {
+          await logEvent("Data fetched for RecordSession", false);
+          console.error("Failed to fetch RecordSession data");
+          setCrdId("Por favor, introduzca el CRD-id");
+          setPatientId("Por favor, introduzca el Patient-id");
+        }
+        const response_json = await response.json();
+        const data = response_json.data;
+        setCrdId(data.crd_id);
+        setPatientId(data.patient_id);
+
+        console.log("Data fetched for RecordSession successfully:", data);
+        await logEvent("Data fetched for RecordSession ", true);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        await logEvent("Data fetched for RecordSession - Conexión", false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <Container maxWidth="xl">
       <Header />
       <Container maxWidth="sm" className="container">
         <div>
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="videoElement"
-          />
+          <video ref={videoRef} autoPlay playsInline muted className="video" />
         </div>
+
         <Stack direction="row" spacing={2} alignItems="center">
           <Button
             variant="outlined"
@@ -224,6 +260,40 @@ const Record = () => {
             </Box>
           )}
         </Stack>
+
+        {crdId !== null &&
+          patientId !== null && ( // Only render when data is available
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ marginTop: 2 }}
+            >
+              <Box width="48%">
+                <TextField
+                  required
+                  id="textField-crd"
+                  label="CRD-id"
+                  variant="outlined"
+                  defaultValue={crdId}
+                  fullWidth
+                  helperText="Identificador único del CRD"
+                />
+              </Box>
+              <Box width="48%">
+                <TextField
+                  required
+                  id="textField-patient"
+                  label="Patient-id"
+                  variant="outlined"
+                  defaultValue={patientId}
+                  fullWidth
+                  helperText="Identificador único del paciente"
+                />
+              </Box>
+            </Stack>
+          )}
       </Container>
     </Container>
   );
