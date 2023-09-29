@@ -1,23 +1,29 @@
-// Basic logging function to log events to the backend
 export const logEvent = async (message: string, success: boolean = true) => {
   const now = new Date().toLocaleString();
   console.log(`[${now}] ${message} - ${success ? "Event" : "Error"}`);
 
-  const payload = new FormData();
-  payload.append("success", success ? "Event" : "Error");
-  payload.append("message", message);
-  payload.append("date", now);
+  const payload = {
+    log_type: success ? "INFO" : "ERROR",
+    message: message,
+  };
 
-  // try {
-  //   const response = await fetch("http://localhost:5000/addLog", {
-  //     method: "POST",
-  //     body: payload,
-  //   });
+  try {
+    const response = await fetch("http://127.0.0.1:5000/log/addLogFrontEnd", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  //   if (!response.ok) {
-  //     throw new Error("Failed to log event");
-  //   }
-  // } catch (error) {
-  //   console.error("Error logging event:", error);
-  // }
+    if (!response.ok) {
+      console.log("Error response from the server:", response);
+      throw new Error("Failed to log event");
+    }
+
+    const responseData = await response.json(); // This line extracts the JSON response
+    console.log("Response from the server:", responseData);
+  } catch (error) {
+    console.error("Error logging event:", error);
+  }
 };
