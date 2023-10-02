@@ -5,6 +5,9 @@ import {
   Stack,
   TextField,
   Typography,
+  TableFooter,
+  TableContainer,
+  Table,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
@@ -12,6 +15,8 @@ import Header from "../components/Header";
 import { logEvent } from "../api/backendLog";
 import "../App.css";
 import BackendHandler from "../api/backendHandler";
+import Swal from "sweetalert2";
+import Footer from "../components/Footer";
 
 interface RecordProps {
   backendHandler: BackendHandler;
@@ -31,7 +36,38 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Render the component
+  const [crdId, setCrdId] = useState<string | null>(null);
+  const [patientId, setPatientId] = useState<string | null>(null);
+
   const startRecording = async () => {
+    // Get the text fields
+    const crdTextField = document.getElementById(
+      "textField-crd"
+    ) as HTMLInputElement;
+    const patientTextField = document.getElementById(
+      "textField-patient"
+    ) as HTMLInputElement;
+    // Check if the text fields are empty
+    if (crdTextField.value === "" || patientTextField.value === "") {
+      // Alert the user
+      Swal.fire({
+        title: "Alerta!",
+        text: "Por favor, introduzca los datos de la sesión.",
+        icon: "warning",
+        confirmButtonText: "Vale",
+      });
+
+      // Console log the event
+      await backendHandler.addLogFrontEnd(
+        "Recording started - Empty text fields",
+        true
+      );
+      console.log("Empty text fields");
+      return;
+    }
+
+    // All good, start recording
     try {
       // Console log the event
       await backendHandler.addLogFrontEnd("Recording started", true);
@@ -110,9 +146,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         backendHandler.addLogFrontEnd("Download link clicked", true);
 
         // Send the video to the server
-        const patientId = "patient_test";
-        const medId = "med_test";
-        sendVideoToServer(blob, patientId, medId);
+        const response = backendHandler.sendVideoToServer(
+          crdId!,
+          patientId!,
+          blob
+        );
 
         // Empty the chunks array
         chunksRef.current = [];
@@ -149,40 +187,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     }${remainingSeconds}`;
   };
 
-  const sendVideoToServer = async (
-    videoBlob: Blob,
-    patientId: string,
-    medId: string
-  ) => {
-    // Prepare the payload and send it to the server
-    const date = new Date().toLocaleString();
-    const videoName = "sesion_" + patientId + "_" + date + "_.webm";
-
-    const payload = new FormData();
-    payload.append("patient_id", patientId);
-    payload.append("med_id", medId);
-    payload.append("video", videoBlob, videoName);
-    payload.append("date", date);
-
-    // try {
-    //   const response = await fetch("http://localhost:5000/sendVideo", {
-    //     method: "POST",
-    //     body: payload,
-    //   });
-
-    //   if (!response.ok) {
-    //     throw new Error("Failed to send video to the server");
-    //   }
-
-    //   const data = await response.json();
-    //   console.log("Video sent successfully:", data);
-    //   logEvent("Video sent to server", true);
-    // } catch (error) {
-    //   console.error("Error sending video to the server:", error);
-    //   logEvent("Video sent to server", false);
-    // }
-  };
-
   useEffect(() => {
     const startStream = async () => {
       try {
@@ -207,10 +211,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       }
     };
   }, []);
-
-  // Render the component
-  const [crdId, setCrdId] = useState<string | null>(null);
-  const [patientId, setPatientId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -261,7 +261,14 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   }, []);
 
   return (
-    <Container maxWidth="xl">
+    <Container
+      maxWidth="xl"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh", // Ensure the container takes full height of the viewport
+      }}
+    >
       <Header />
       <Container maxWidth="sm" className="container">
         <div>
@@ -323,6 +330,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             </Stack>
           )}
       </Container>
+      <Footer />
     </Container>
   );
 };
