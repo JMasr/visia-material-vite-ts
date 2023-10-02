@@ -11,8 +11,13 @@ import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import Header from "../components/Header";
 import { logEvent } from "../api/backendLog";
 import "../App.css";
+import BackendHandler from "../api/backendHandler";
 
-const Record = () => {
+interface RecordProps {
+  backendHandler: BackendHandler;
+}
+
+const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   // Video recording logic
   const countdownDurationSeconds = 540; // 9 minutes in seconds
   const [isRecording, setIsRecording] = useState(false);
@@ -29,7 +34,7 @@ const Record = () => {
   const startRecording = async () => {
     try {
       // Console log the event
-      await logEvent("Recording started", true);
+      await backendHandler.addLogFrontEnd("Recording started", true);
 
       // Get the patient ID from the URL
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -37,13 +42,16 @@ const Record = () => {
         video: true,
       });
       videoRef.current!.srcObject = stream;
-      await logEvent("Camera and microphone access granted", true);
+      await backendHandler.addLogFrontEnd(
+        "Camera and microphone access granted",
+        true
+      );
 
       // Initialize the MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: "video/webm;codecs=vp9,opus",
       });
-      await logEvent("MediaRecorder initialized", true);
+      await backendHandler.addLogFrontEnd("MediaRecorder initialized", true);
 
       // Add event listener for dataavailable
       mediaRecorder.ondataavailable = (event) => {
@@ -67,14 +75,14 @@ const Record = () => {
       startTimeRef.current = performance.now();
       updateTimer();
     } catch (error) {
-      await logEvent("Recording started", false);
+      await backendHandler.addLogFrontEnd("Recording started", false);
       console.error("Error starting recording:", error);
     }
   };
 
   const stopRecording = () => {
     // Console log the event
-    logEvent("Recording stopped", true);
+    backendHandler.addLogFrontEnd("Recording stopped", true);
 
     try {
       // Stop the recording
@@ -83,23 +91,23 @@ const Record = () => {
 
       // Stop the video post-recording
       mediaRecorderRef.current?.addEventListener("stop", () => {
-        logEvent("Video recording stopped", true);
+        backendHandler.addLogFrontEnd("Video recording stopped", true);
 
         // Init the video Blob
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
-        logEvent("Video Blob created", true);
+        backendHandler.addLogFrontEnd("Video Blob created", true);
 
         // Create a download link
         const downloadLink = document.createElement("a");
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = "recorded-video.webm";
-        logEvent("Download link created", true);
+        backendHandler.addLogFrontEnd("Download link created", true);
 
         // Click the download link
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
-        logEvent("Download link clicked", true);
+        backendHandler.addLogFrontEnd("Download link clicked", true);
 
         // Send the video to the server
         const patientId = "patient_test";
@@ -108,12 +116,12 @@ const Record = () => {
 
         // Empty the chunks array
         chunksRef.current = [];
-        logEvent("Chunks array emptied", true);
+        backendHandler.addLogFrontEnd("Chunks array emptied", true);
       });
 
       cancelAnimationFrame(requestRef.current!);
     } catch (error) {
-      logEvent("Recording stopped", false);
+      backendHandler.addLogFrontEnd("Recording stopped", false);
       console.error("Error stopping recording:", error);
     }
   };
@@ -207,25 +215,45 @@ const Record = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/getRecordData", {
-          method: "GET",
-        });
-        if (!response.ok) {
-          await logEvent("Data fetched for RecordSession", false);
+        // Fetch data from the backend
+        const response_backend = await backendHandler.getRenderData(
+          "/getRecordData"
+        );
+
+        if (response_backend === null) {
+          // Handle error
+          await backendHandler.addLogFrontEnd(
+            "Data fetched for RecordSession",
+            false
+          );
           console.error("Failed to fetch RecordSession data");
+
+          // Set default values
           setCrdId("Por favor, introduzca el CRD-id");
           setPatientId("Por favor, introduzca el Patient-id");
         }
-        const response_json = await response.json();
-        const data = response_json.data;
-        setCrdId(data.crd_id);
-        setPatientId(data.patient_id);
 
-        console.log("Data fetched for RecordSession successfully:", data);
-        await logEvent("Data fetched for RecordSession ", true);
+        // Handle success
+        setCrdId(response_backend.crd_id);
+        setPatientId(response_backend.patient_id);
+
+        console.log(
+          "Data fetched for RecordSession successfully:",
+          response_backend
+        );
+        await backendHandler.addLogFrontEnd(
+          "Data fetched for RecordSession: " +
+            response_backend.crd_id +
+            " " +
+            response_backend.patient_id,
+          true
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
-        await logEvent("Data fetched for RecordSession - Conexión", false);
+        await backendHandler.addLogFrontEnd(
+          "Data fetched for RecordSession - Error RXTX",
+          false
+        );
       }
     };
 

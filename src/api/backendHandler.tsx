@@ -34,19 +34,74 @@ class BackendHandler {
     }
   }
 
-  public async logEvent(message: string, success: boolean): Promise<void> {
-    try {
-      const date = new Date().toLocaleString();
-      await this.makeBasicRequest<void>("/addLog", "POST", {
-        message,
-        success,
-        date,
-      });
-      console.log("Event logged successfully.");
-    } catch (error) {
-      console.error("Failed to log event:", error);
-      throw error;
+  public async requestTokenByUsrPass(
+    username: string,
+    password: string
+  ): Promise<string | null> {
+    const url = "http://your-backend-url/login"; // Replace with your actual login endpoint
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+      }),
+    });
+
+    if (!response.ok) {
+      // TODO: Handle error with log
+      console.error("Failed to request token:", response.statusText);
+      return null;
     }
+
+    const data = await response.json();
+    // TODO: Handle success with log
+    return data.access_token; // Assuming the token is returned in the response as 'access_token'
+  }
+
+  public async addLogFrontEnd(message: string, success: boolean = true) {
+    const now = new Date().toLocaleString();
+    console.log(`[${now}] ${message} - ${success ? "Event" : "Error"}`);
+
+    const payload = {
+      log_type: success ? "INFO" : "ERROR",
+      message: message,
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/log/addLogFrontEnd`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        console.log("Error response from the server:", response);
+        throw new Error("Failed to log event");
+      }
+
+      const responseData = await response.json(); // This line extracts the JSON response
+      console.log("Response from the server:", responseData);
+    } catch (error) {
+      console.error("Error logging event:", error);
+    }
+  }
+
+  public async getRenderData(url: string): Promise<any | null> {
+    const response = await fetch(`${this.baseUrl}${url}`);
+
+    if (!response.ok) {
+      console.error("Failed to get render data:", response.statusText);
+      return null; // Return empty strings instead of null
+    }
+
+    const response_json = await response.json();
+    return response_json.data;
   }
 }
 
