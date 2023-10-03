@@ -1,0 +1,44 @@
+async function requestTokenByUsrPass(username: string, password: string): Promise<string | null> {
+    const url = 'http://your-backend-url/login';  // Replace with your actual login endpoint
+  
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    });
+  
+    if (!response.ok) {
+      console.error('Failed to request token:', response.statusText);
+      return null;
+    }
+  
+    const data = await response.json();
+    return data.access_token;  // Assuming the token is returned in the response as 'access_token'
+  }
+  
+  async function requestTokenBySecret(secret: string): Promise<string | null> {
+    const url = 'http://your-backend-url/login';  // Replace with your actual login endpoint
+  
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        secret: secret
+      })
+    });
+  
+    if (!response.ok) {
+      console.error('Failed to request token:', response.statusText);
+      return null;
+    }
+  
+    const data = await response.json();
+    return data.access_token;
+  }

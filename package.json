@@ -15,7 +15,8 @@
     "@mui/material": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-media-recorder": "^1.6.6"
+    "react-media-recorder": "^1.6.6",
+    "sweetalert2": "^11.7.31"
   },
   "devDependencies": {
     "@types/react": "latest",

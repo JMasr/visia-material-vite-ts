@@ -12,7 +12,6 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import Header from "../components/Header";
-import { logEvent } from "../api/backendLog";
 import "../App.css";
 import BackendHandler from "../api/backendHandler";
 import Swal from "sweetalert2";
@@ -126,7 +125,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       setIsRecording(false);
 
       // Stop the video post-recording
-      mediaRecorderRef.current?.addEventListener("stop", () => {
+      mediaRecorderRef.current?.addEventListener("stop", async () => {
         backendHandler.addLogFrontEnd("Video recording stopped", true);
 
         // Init the video Blob
@@ -146,21 +145,28 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         backendHandler.addLogFrontEnd("Download link clicked", true);
 
         // Send the video to the server
-        const response = backendHandler.sendVideoToServer(
+        const response = await backendHandler.sendVideoToServer(
           crdId!,
           patientId!,
           blob
         );
-
-        // Empty the chunks array
-        chunksRef.current = [];
-        backendHandler.addLogFrontEnd("Chunks array emptied", true);
+        if (response) {
+          backendHandler.addLogFrontEnd("Video sent to the server", true);
+        }
       });
-
-      cancelAnimationFrame(requestRef.current!);
     } catch (error) {
-      backendHandler.addLogFrontEnd("Recording stopped", false);
-      console.error("Error stopping recording:", error);
+      chunksRef.current = [];
+      backendHandler.addLogFrontEnd("Recording fail!", false);
+      console.error("Error during recording:", error);
+    } finally {
+      // Stop the stream
+      cancelAnimationFrame(requestRef.current!);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      // Empty the chunks array
+      chunksRef.current = [];
+      backendHandler.addLogFrontEnd("Chunks array emptied", true);
     }
   };
 
