@@ -103,6 +103,51 @@ class BackendHandler {
     const response_json = await response.json();
     return response_json.data;
   }
+
+  public async sendVideoToServer(
+    crdId: string,
+    patientId: string,
+    videoBlob: Blob
+  ): Promise<boolean> {
+    // Prepare the payload and send it to the server
+    const date = new Date().toLocaleString();
+    const videoName = "sesion_" + patientId + "_" + date + "_.webm";
+    // Make the payload
+    const payload = new FormData();
+    payload.append("crd_id", crdId);
+    payload.append("patient_id", patientId);
+    payload.append("video", videoBlob);
+    payload.append("video_name", videoName);
+    payload.append("date", date);
+
+    try {
+      // Send the payload to the server
+      const response = await fetch(`${this.baseUrl}/video/uploads`, {
+        method: "POST",
+        body: payload,
+      });
+
+      // Check the response
+      if (!response.ok) {
+        // Handle error
+        this.addLogFrontEnd("Failed to send video to the server", false); // Log the error
+        console.error(
+          "Failed to send video to the server:",
+          response.statusText
+        );
+        return false;
+      }
+
+      // Handle success
+      const data = await response.json();
+      console.log("Video sent successfully:", data);
+      return true;
+    } catch (error) {
+      // Handle error
+      console.error("Error sending video to the server:", error);
+      return false;
+    }
+  }
 }
 
 export default BackendHandler;
