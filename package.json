@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "vitest",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 5300"
   },
   "dependencies": {
     "@emotion/react": "latest",
@@ -15,13 +16,15 @@
     "@mui/material": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-media-recorder": "^1.6.6"
+    "react-media-recorder": "^1.6.6",
+    "sweetalert2": "^11.7.31"
   },
   "devDependencies": {
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
     "typescript": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "vitest": "^0.34.6"
   }
 }
