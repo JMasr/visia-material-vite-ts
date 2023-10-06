@@ -1,8 +1,40 @@
+import Swal from "sweetalert2";
+
 class BackendHandler {
   private baseUrl: string;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+  }
+
+  public async pollBackEnd(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/poll`);
+      const data = await response.json();
+      if (!data.success) {
+        console.error("Error pinging the backend:", data.message);
+
+        // Alert the user
+        Swal.fire({
+          title: "Alerta!",
+          text: "Backend no disponible",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
+      console.log("Response from the backend:", response);
+
+      return data.success;
+    } catch (error) {
+      // Alert the user
+      Swal.fire({
+        title: "Alerta!",
+        text: "Backend no disponible",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return false;
+    }
   }
 
   private async makeBasicRequest<T>(

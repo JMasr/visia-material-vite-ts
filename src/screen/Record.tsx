@@ -22,6 +22,9 @@ interface RecordProps {
 }
 
 const Record: React.FC<RecordProps> = ({ backendHandler }) => {
+  // Check if the backend is available
+  backendHandler.pollBackEnd();
+
   // Video recording logic
   const countdownDurationSeconds = 540; // 9 minutes in seconds
   const [isRecording, setIsRecording] = useState(false);
@@ -131,18 +134,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         // Init the video Blob
         const blob = new Blob(chunksRef.current, { type: "video/webm" });
         backendHandler.addLogFrontEnd("Video Blob created", true);
-
-        // Create a download link
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = "recorded-video.webm";
-        backendHandler.addLogFrontEnd("Download link created", true);
-
-        // Click the download link
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        backendHandler.addLogFrontEnd("Download link clicked", true);
 
         // Send the video to the server
         const response = await backendHandler.sendVideoToServer(
