@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import Header from "./components/Header";
 import { Container, Button, Stack, Typography, Box } from "@mui/material";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
+import "@fontsource/roboto";
+
 import "./App.css"; // Import a CSS file for styling
 import Record from "./screen/Record";
 import BackendHandler from "./api/backendHandler";
