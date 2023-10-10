@@ -147,7 +147,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       });
 
       // Redirect to the next page
-      window.location.href = "http://localhost/visiaq/preguntas" ;
+      window.location.href = "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId + "&pid=" + patientId;
       // TODO: Redirect with the CRD-id and Patient-id
 
     } catch (error) {
