@@ -145,6 +145,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           backendHandler.addLogFrontEnd("Video sent to the server", true);
         }
       });
+
+      // Redirect to the next page
+      window.location.href = "http://localhost/visiaq/preguntas" ;
+      // TODO: Redirect with the CRD-id and Patient-id
+
     } catch (error) {
       chunksRef.current = [];
       backendHandler.addLogFrontEnd("Recording fail!", false);
