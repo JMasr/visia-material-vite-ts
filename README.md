@@ -26,4 +26,9 @@ This is a simple recording app to capture audio and videos from users.
 2. It includes `@mui/material` and its peer dependencies, including
 3. [Emotion](https://emotion.sh/docs/introduction), the default style engine in Material UI v5.
 
+## Bugs or related problems
+
+- CORS in the web brouser
+  https://microsoftedge.microsoft.com/addons/detail/bhjepjpgngghppolkjdhckmnfphffdag?refid=bingshortanswersdownload
+
 ## What's next?
