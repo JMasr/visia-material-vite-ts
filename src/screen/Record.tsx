@@ -122,6 +122,10 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     // Console log the event
     backendHandler.addLogFrontEnd("Recording stopped", true);
 
+    // Redirect to the next page
+    window.location.href = "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId + "&pid=" + patientId;
+    // TODO: Redirect with the CRD-id and Patient-id
+
     try {
       // Stop the recording
       mediaRecorderRef.current?.stop();
@@ -145,11 +149,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           backendHandler.addLogFrontEnd("Video sent to the server", true);
         }
       });
-
-      // Redirect to the next page
-      window.location.href = "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId + "&pid=" + patientId;
-      // TODO: Redirect with the CRD-id and Patient-id
-
     } catch (error) {
       chunksRef.current = [];
       backendHandler.addLogFrontEnd("Recording fail!", false);
