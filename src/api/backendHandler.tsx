@@ -2,9 +2,60 @@ import Swal from "sweetalert2";
 
 class BackendHandler {
   private baseUrl: string;
+  private accessToken!: string;
+  private user: string= "frontUser";
+  private password: string = "frontPass";
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+    this.initializeAccessToken();
+  }
+
+  private async initializeAccessToken(): Promise<void> {
+    await this.requestAccessToken(this.user, this.password);
+    if (typeof this.accessToken === "string") {
+      this.accessToken = this.accessToken;
+      console.log("Access token received");
+      this.addLogFrontEnd("Access token received", true);
+    } else {
+      console.error("Access token is not a string:", this.accessToken);
+      this.addLogFrontEnd("Access token", false);
+      throw new Error("Access token is not a string");
+    }
+  }
+
+  
+  public async requestAccessToken(username: string, password: string): Promise<void> {
+    const url = `${this.baseUrl}/requestAccessTokenByUser`;
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to request access token:");
+        this.addLogFrontEnd("Failed to request access token", false);
+        throw new Error("Failed to request access token");
+      }
+
+      const data = await response.json();
+      this.accessToken = data.access_token;
+
+      console.log("Access token received:" + this.accessToken);
+      this.addLogFrontEnd("Access token received");
+    } catch (error) {
+      console.error("Error requesting access token:", error);
+      this.addLogFrontEnd("Error requesting access token", false);
+      throw error;
+    }
   }
 
   public async pollBackEnd(): Promise<boolean> {
@@ -35,63 +86,6 @@ class BackendHandler {
       });
       return false;
     }
-  }
-
-  private async makeBasicRequest<T>(
-    url: string,
-    method: string,
-    payload?: any,
-    headers?: Record<string, string>
-  ): Promise<T> {
-    const options: RequestInit = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      body: payload ? JSON.stringify(payload) : undefined,
-    };
-
-    try {
-      const response = await fetch(`${this.baseUrl}${url}`, options);
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error("Request error:", error);
-      throw error;
-    }
-  }
-
-  public async requestTokenByUsrPass(
-    username: string,
-    password: string
-  ): Promise<string | null> {
-    const url = "http://your-backend-url/login"; // Replace with your actual login endpoint
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    });
-
-    if (!response.ok) {
-      // TODO: Handle error with log
-      console.error("Failed to request token:", response.statusText);
-      return null;
-    }
-
-    const data = await response.json();
-    // TODO: Handle success with log
-    return data.access_token; // Assuming the token is returned in the response as 'access_token'
   }
 
   public async addLogFrontEnd(message: string, success: boolean = true) {
@@ -157,7 +151,8 @@ class BackendHandler {
       const response = await fetch(`${this.baseUrl}/video/uploads`, {
         method: "POST",
         body: payload,
-      });
+        headers: { Authorization: `Bearer ${this.accessToken}`},
+        });
 
       // Check the response
       if (!response.ok) {
