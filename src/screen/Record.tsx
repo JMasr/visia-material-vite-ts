@@ -218,7 +218,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       try {
         // Fetch data from the backend
         const response_backend = await backendHandler.getRenderData(
-          "/getRecordData"
+          "/render/getRecordData"
         );
 
         if (response_backend === null) {
