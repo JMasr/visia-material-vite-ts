@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
       }}
     >
       <Typography variant="body2">
-        {`© ${new Date().getFullYear()} atlanTTic Research Center.`}
+        {`© ${new Date().getFullYear()} Centro de investigación atlanTTic.`}
       </Typography>
     </Box>
   );

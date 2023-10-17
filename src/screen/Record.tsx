@@ -230,8 +230,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           console.error("Failed to fetch RecordSession data");
 
           // Set default values
-          setCrdId("Por favor, introduzca el CRD-id");
-          setPatientId("Por favor, introduzca el Patient-id");
+          setCrdId("Por favor, introduzca el ID del CRD");
+          setPatientId("Por favor, introduzca el ID del paciente");
         }
 
         // Handle success
@@ -310,7 +310,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 <TextField
                   required
                   id="textField-crd"
-                  label="CRD-id"
+                  label="Identificador CRD"
                   variant="outlined"
                   defaultValue={crdId}
                   fullWidth
@@ -321,7 +321,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 <TextField
                   required
                   id="textField-patient"
-                  label="Patient-id"
+                  label="Identificador Paciente"
                   variant="outlined"
                   defaultValue={patientId}
                   fullWidth
