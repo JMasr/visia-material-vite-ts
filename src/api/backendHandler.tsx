@@ -64,11 +64,11 @@ class BackendHandler {
       const data = await response.json();
       if (!data.success) {
         console.error("Error pinging the backend:", data.message);
-
+        console.log("Response from the backend:", response);
         // Alert the user
         Swal.fire({
           title: "Alerta!",
-          text: "Backend no disponible",
+          text: "Backend no disponible: " + data.message,
           icon: "error",
           confirmButtonText: "OK",
         });
