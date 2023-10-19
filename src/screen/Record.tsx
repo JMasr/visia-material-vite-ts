@@ -38,7 +38,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Render the component
+  // Render the component   
   const [crdId, setCrdId] = useState<string | null>(null);
   const [patientId, setPatientId] = useState<string | null>(null);
 
@@ -271,10 +271,10 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       }}
     >
       <Header />
-      <Container maxWidth="sm" className="container">
-        <div>
-          <video ref={videoRef} autoPlay playsInline muted className="video" />
-        </div>
+      <Container maxWidth="md" className="container">
+      <div className="video-container">
+        <video ref={videoRef} autoPlay playsInline muted className="video" />
+      </div>
 
         <Stack direction="row" spacing={2} alignItems="center">
           <Button
