@@ -1,3 +1,12 @@
+import "../App.css";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import BackendHandler from "../api/backendHandler";
+
+import Swal from "sweetalert2";
+
+import React, { useEffect, useRef, useState } from "react";
+import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import {
   Box,
   Button,
@@ -5,15 +14,7 @@ import {
   Stack,
   TextField,
   Typography,
-  TableContainer,
 } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
-import Header from "../components/Header";
-import "../App.css";
-import BackendHandler from "../api/backendHandler";
-import Swal from "sweetalert2";
-import Footer from "../components/Footer";
 
 interface RecordProps {
   backendHandler: BackendHandler;
