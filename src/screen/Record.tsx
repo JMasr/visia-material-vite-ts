@@ -5,9 +5,7 @@ import {
   Stack,
   TextField,
   Typography,
-  TableFooter,
   TableContainer,
-  Table,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
