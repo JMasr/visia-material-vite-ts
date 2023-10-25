@@ -86,9 +86,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       );
 
       // Initialize the MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "video/webm;codecs=vp9,opus",
-      });
+      const options = {
+        mimeType: 'video/x-matroska;codecs=avc1',
+        videoBitsPerSecond: 10000000 // 10Mbps
+      };
+      const mediaRecorder = new MediaRecorder(stream, options);
       await backendHandler.addLogFrontEnd("MediaRecorder initialized", true);
 
       // Add event listener for dataavailable
@@ -99,7 +101,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       };
       // Add event listener for stop
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        const blob = new Blob(chunksRef.current, { type: "video/mp4" });
         const videoUrl = URL.createObjectURL(blob);
         console.log("Recorded video URL:", videoUrl);
       };
