@@ -7,7 +7,8 @@
     "dev": "vite",
     "test": "vitest",
     "build": "tsc && vite build",
-    "preview": "vite preview --port 5300"
+    "preview": "vite preview --port 5300",
+    "start": "http-server ./dist -p 8080"
   },
   "dependencies": {
     "@emotion/react": "latest",
