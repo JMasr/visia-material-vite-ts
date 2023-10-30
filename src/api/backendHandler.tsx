@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 class BackendHandler {
   private baseUrl: string;
   private accessToken!: string;
-  private user: string= "frontUser";
+  private user: string = "frontUser";
   private password: string = "frontPass";
 
   constructor(baseUrl: string) {
@@ -24,8 +24,10 @@ class BackendHandler {
     }
   }
 
-  
-  public async requestAccessToken(username: string, password: string): Promise<void> {
+  public async requestAccessToken(
+    username: string,
+    password: string
+  ): Promise<void> {
     const url = `${this.baseUrl}/requestAccessTokenByUser`;
 
     try {
@@ -151,8 +153,8 @@ class BackendHandler {
       const response = await fetch(`${this.baseUrl}/video/uploads`, {
         method: "POST",
         body: payload,
-        headers: { Authorization: `Bearer ${this.accessToken}`},
-        });
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
 
       // Check the response
       if (!response.ok) {

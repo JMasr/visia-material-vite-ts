@@ -37,7 +37,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Render the component   
+  // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
   const [patientId, setPatientId] = useState<string | null>(null);
 
@@ -86,8 +86,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
       // Initialize the MediaRecorder
       const options = {
-        mimeType: 'video/x-matroska;codecs=avc1',
-        videoBitsPerSecond: 10000000 // 10Mbps
+        mimeType: "video/x-matroska;codecs=avc1",
+        videoBitsPerSecond: 10000000, // 10Mbps
       };
       const mediaRecorder = new MediaRecorder(stream, options);
       await backendHandler.addLogFrontEnd("MediaRecorder initialized", true);
@@ -124,7 +124,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     backendHandler.addLogFrontEnd("Recording stopped", true);
 
     // Redirect to the next page
-    window.location.href = "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId + "&pid=" + patientId;
+    window.location.href =
+      "http://localhost/visiaq/preguntas/?her=y&crd=" +
+      crdId +
+      "&pid=" +
+      patientId;
     // TODO: Redirect with the CRD-id and Patient-id
 
     try {
@@ -273,9 +277,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     >
       <Header />
       <Container maxWidth="md" className="container">
-      <div className="video-container">
-        <video ref={videoRef} autoPlay playsInline muted className="video" />
-      </div>
+        <div className="video-container">
+          <video ref={videoRef} autoPlay playsInline muted className="video" />
+        </div>
 
         <Stack direction="row" spacing={2} alignItems="center">
           <Button
