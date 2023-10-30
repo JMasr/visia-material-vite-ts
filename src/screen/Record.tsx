@@ -137,7 +137,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         backendHandler.addLogFrontEnd("Video recording stopped", true);
 
         // Init the video Blob
-        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        const blob = new Blob(chunksRef.current, { type: "video/mp4" });
         backendHandler.addLogFrontEnd("Video Blob created", true);
 
         // Send the video to the server
