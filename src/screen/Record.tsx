@@ -24,10 +24,13 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   // Check if the backend is available
   backendHandler.pollBackEnd();
 
+  const RECORD_BUTTON_LABEL = "Grabar";
+  const STOP_RECORDING_BUTTON_LABEL = "Detener Grabación";
+
   // Video recording logic
-  const countdownDurationSeconds = 540; // 9 minutes in seconds
+  const COUNTDOWN_DURATION_SECONDS  = 540; // 9 minutes in seconds
   const [isRecording, setIsRecording] = useState(false);
-  const [countdown, setCountdown] = useState(countdownDurationSeconds);
+  const [countdown, setCountdown] = useState(COUNTDOWN_DURATION_SECONDS );
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
@@ -38,8 +41,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const chunksRef = useRef<Blob[]>([]);
 
   // Render the component
-  const [crdId, setCrdId] = useState<string | null>(null);
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const [crdId, setCrdId] = useState<string | null>("Por favor, introduzca el ID del CRD");
+  const [patientId, setPatientId] = useState<string | null>("Por favor, introduzca el ID del paciente");
 
   const startRecording = async () => {
     // Get the text fields
@@ -78,6 +81,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         audio: true,
         video: true,
       });
+      
       videoRef.current!.srcObject = stream;
       await backendHandler.addLogFrontEnd(
         "Camera and microphone access granted",
@@ -86,9 +90,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
       // Initialize the MediaRecorder
       const options = {
-        mimeType: "video/x-matroska;codecs=avc1",
-        videoBitsPerSecond: 10000000, // 10Mbps
-      };
+        mimeType: "video/x-matroska;codecs=avc1",      };
       const mediaRecorder = new MediaRecorder(stream, options);
       await backendHandler.addLogFrontEnd("MediaRecorder initialized", true);
 
@@ -124,12 +126,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     backendHandler.addLogFrontEnd("Recording stopped", true);
 
     // Redirect to the next page
-    window.location.href =
-      "http://localhost/visiaq/preguntas/?her=y&crd=" +
-      crdId +
-      "&pid=" +
-      patientId;
-    // TODO: Redirect with the CRD-id and Patient-id
+    window.location.href = "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId + "&pid=" + patientId;
 
     try {
       // Stop the recording
@@ -174,7 +171,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     const elapsed = performance.now() - startTimeRef.current!;
     const newCountdown = Math.max(
       0,
-      countdownDurationSeconds - Math.floor(elapsed / 1000)
+      COUNTDOWN_DURATION_SECONDS  - Math.floor(elapsed / 1000)
     );
     setCountdown(newCountdown);
 
@@ -238,8 +235,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           setCrdId("Por favor, introduzca el ID del CRD");
           setPatientId("Por favor, introduzca el ID del paciente");
         }
-
-        // Handle success
+        else{
+          // Handle success
         setCrdId(response_backend.crd_id);
         setPatientId(response_backend.patient_id);
 
@@ -254,6 +251,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             response_backend.patient_id,
           true
         );
+        }
+
+        
       } catch (error) {
         console.error("Error fetching data:", error);
         await backendHandler.addLogFrontEnd(
@@ -288,7 +288,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             color={isRecording ? "error" : "primary"}
             onClick={isRecording ? stopRecording : startRecording}
           >
-            {isRecording ? "Detener Grabación" : "Grabar"}
+            {isRecording ? STOP_RECORDING_BUTTON_LABEL : RECORD_BUTTON_LABEL}
           </Button>
           {isRecording && (
             <Box display="flex" alignItems="center" marginLeft={2}>
@@ -317,7 +317,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                   id="textField-crd"
                   label="Identificador CRD"
                   variant="outlined"
-                  defaultValue={crdId}
+                  value={crdId}
+                  onChange={(e) => setCrdId(e.target.value)}
                   fullWidth
                   helperText="Identificador único del CRD"
                 />
@@ -328,7 +329,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                   id="textField-patient"
                   label="Identificador Paciente"
                   variant="outlined"
-                  defaultValue={patientId}
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
                   fullWidth
                   helperText="Identificador único del paciente"
                 />
