@@ -1,23 +1,21 @@
 .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 10px;
-  }
-  
-  .video-container {
-    position: flex;
-    width: 100%;
-    
-  }
-  
-  
-  .video {
-    max-width: 100%;
-    object-fit: cover;
-  }
-  
-  .countdown {
-    font-size: 1.2rem;
-    margin-left: 20px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.video-container {
+  position: flex;
+  width: 100%;
+}
+
+.video {
+  max-width: 100%;
+  object-fit: cover;
+}
+
+.countdown {
+  font-size: 1.2rem;
+  margin-left: 20px;
+}
