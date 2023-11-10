@@ -48,8 +48,14 @@ class BackendHandler {
         throw new Error("Failed to request access token");
       }
 
-      const data = await response.json();
-      this.accessToken = data.access_token;
+      try {
+        const data = await response.json();
+        this.accessToken = data.access_token;
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        this.addLogFrontEnd("Error parsing JSON", false);
+        throw jsonError;
+      }
 
       console.log("Access token received:" + this.accessToken);
       this.addLogFrontEnd("Access token received");
@@ -63,21 +69,50 @@ class BackendHandler {
   public async pollBackEnd(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/poll`);
-      const data = await response.json();
-      if (!data.success) {
-        console.error("Error pinging the backend:", data.message);
-        console.log("Response from the backend:", response);
+      if (!response.ok) {
+        console.error(
+          "Error pinging the backend:",
+          response.status,
+          response.statusText
+        );
         // Alert the user
         Swal.fire({
           title: "Alerta!",
-          text: "Backend no disponible: " + data.message,
+          text: "Backend no disponible: " + response.statusText,
           icon: "error",
           confirmButtonText: "OK",
         });
+        return false;
       }
-      console.log("Response from the backend:", response);
 
-      return data.success;
+      try {
+        const data = await response.json();
+        console.log("Response from the backend:", data);
+
+        if (!data.success) {
+          console.error("Error pinging the backend:", data.message);
+          console.error("Response from the backend:", response);
+          // Alert the user
+          Swal.fire({
+            title: "Alerta!",
+            text: "Backend no disponible: " + data.message,
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+        }
+        console.log("Response from the backend:", response);
+
+        return data.success;
+      } catch (jsonError) {
+        // Alert the user
+        Swal.fire({
+          title: "Alerta!",
+          text: "Backend no disponible",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return false;
+      }
     } catch (error) {
       // Alert the user
       Swal.fire({
@@ -109,27 +144,50 @@ class BackendHandler {
       });
 
       if (!response.ok) {
-        console.log("Error response from the server:", response);
+        console.error(
+          "Error response from the server:",
+          response.status,
+          response.statusText
+        );
         throw new Error("Failed to log event");
       }
 
-      const responseData = await response.json(); // This line extracts the JSON response
-      console.log("Response from the server:", responseData);
+      try {
+        const responseData = await response.json(); // This line extracts the JSON response
+        console.log("Response from the server:", responseData);
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        throw jsonError;
+      }
     } catch (error) {
       console.error("Error logging event:", error);
     }
   }
 
-  public async getRenderData(url: string): Promise<any | null> {
-    const response = await fetch(`${this.baseUrl}${url}`);
+  public async getRenderData(url: string): Promise<string | object> {
+    try {
+      const response = await fetch(`${this.baseUrl}${url}`);
 
-    if (!response.ok) {
-      console.error("Failed to get render data:", response.statusText);
-      return null; // Return empty strings instead of null
+      if (!response.ok) {
+        console.error(
+          "Failed to get render data:",
+          response.status,
+          response.statusText
+        );
+        return "";
+      }
+
+      try {
+        const response_json = await response.json();
+        return response_json.data;
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        return "";
+      }
+    } catch (error) {
+      console.error("Error getting render data:", error);
+      return "";
     }
-
-    const response_json = await response.json();
-    return response_json.data;
   }
 
   public async sendVideoToServer(
@@ -160,6 +218,7 @@ class BackendHandler {
         this.addLogFrontEnd("Failed to send video to the server", false); // Log the error
         console.error(
           "Failed to send video to the server:",
+          response.status,
           response.statusText
         );
         return false;
@@ -172,6 +231,110 @@ class BackendHandler {
     } catch (error) {
       // Handle error
       console.error("Error sending video to the server:", error);
+      return false;
+    }
+  }
+
+  public async startRecording(): Promise<boolean> {
+    const url = `${this.baseUrl}/video/digicam/startVideo`;
+
+    try {
+      const response = await fetch(`${url}`);
+
+      try {
+        const data = await response.json();
+        if (!response.ok) {
+          console.error(
+            "Failed to start recording:",
+            response.status,
+            response.statusText
+          );
+          this.addLogFrontEnd(
+            "Failed to start recording: " + response.statusText,
+            false
+          );
+          return false;
+        }
+
+        if (data.success) {
+          console.log("Recording started successfully");
+          this.addLogFrontEnd("Recording started successfully", true);
+          return true;
+        } else {
+          console.error("Failed to start recording:", data.message);
+          this.addLogFrontEnd(
+            "Failed to start recording: " + data.message,
+            false
+          );
+          return false;
+        }
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        this.addLogFrontEnd("Error parsing JSON", false);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error requesting access token:", error);
+      this.addLogFrontEnd("Error requesting access token", false);
+      return false;
+    }
+  }
+
+  public async stopRecording(crdId: string): Promise<boolean> {
+    if (!crdId || crdId.trim() === "") {
+      console.error("Invalid crdId provided:", crdId);
+      this.addLogFrontEnd("Invalid crdId provided", false);
+      return false;
+    }
+
+    const url = `${this.baseUrl}/video/digicam/stopVideo`;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          crdId,
+        }),
+      });
+
+      try {
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(
+            "Failed to stop recording:",
+            response.status,
+            response.statusText
+          );
+          this.addLogFrontEnd(
+            "Failed to stop recording: " + response.statusText,
+            false
+          );
+          return false;
+        }
+
+        if (data.success) {
+          console.log("Recording stopped successfully");
+          this.addLogFrontEnd("Recording stopped successfully", true);
+          return true;
+        } else {
+          console.error("Failed to stop recording:", data.message);
+          this.addLogFrontEnd(
+            "Failed to stop recording: " + data.message,
+            false
+          );
+          return false;
+        }
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        this.addLogFrontEnd("Error parsing JSON", false);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error stopping recording:", error);
+      this.addLogFrontEnd("Error stopping recording", false);
       return false;
     }
   }
