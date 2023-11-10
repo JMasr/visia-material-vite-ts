@@ -44,20 +44,14 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(
     "Por favor, introduzca el ID del CRD"
   );
-  const [patientId, setPatientId] = useState<string | null>(
-    "Por favor, introduzca el ID del paciente"
-  );
 
   const startRecording = async () => {
     // Get the text fields
     const crdTextField = document.getElementById(
       "textField-crd"
     ) as HTMLInputElement;
-    const patientTextField = document.getElementById(
-      "textField-patient"
-    ) as HTMLInputElement;
     // Check if the text fields are empty
-    if (crdTextField.value === "" || patientTextField.value === "") {
+    if (crdTextField.value === "") {
       // Alert the user
       Swal.fire({
         title: "Alerta!",
@@ -79,8 +73,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     try {
       // Console log the event
       await backendHandler.addLogFrontEnd("Recording started", true);
-
-      // Get the patient ID from the URL
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
@@ -132,10 +124,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
     // Redirect to the next page
     window.location.href =
-      "http://localhost/visiaq/preguntas/?her=y&crd=" +
-      crdId +
-      "&pid=" +
-      patientId;
+      "http://localhost/visiaq/preguntas/?her=y&crd=" + crdId;
 
     try {
       // Stop the recording
@@ -151,11 +140,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         backendHandler.addLogFrontEnd("Video Blob created", true);
 
         // Send the video to the server
-        const response = await backendHandler.sendVideoToServer(
-          crdId!,
-          patientId!,
-          blob
-        );
+        const response = await backendHandler.sendVideoToServer(crdId!, blob);
         if (response) {
           backendHandler.addLogFrontEnd("Video sent to the server", true);
         }
@@ -242,21 +227,16 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
           // Set default values
           setCrdId("Por favor, introduzca el ID del CRD");
-          setPatientId("Por favor, introduzca el ID del paciente");
         } else {
           // Handle success
           setCrdId(response_backend.crd_id);
-          setPatientId(response_backend.patient_id);
 
           console.log(
             "Data fetched for RecordSession successfully:",
             response_backend
           );
           await backendHandler.addLogFrontEnd(
-            "Data fetched for RecordSession: " +
-              response_backend.crd_id +
-              " " +
-              response_backend.patient_id,
+            "Data fetched for RecordSession: " + response_backend.crd_id + " ",
             true
           );
         }
@@ -308,41 +288,28 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           )}
         </Stack>
 
-        {crdId !== null &&
-          patientId !== null && ( // Only render when data is available
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ marginTop: 2 }}
-            >
-              <Box width="48%">
-                <TextField
-                  required
-                  id="textField-crd"
-                  label="Identificador CRD"
-                  variant="outlined"
-                  value={crdId}
-                  onChange={(e) => setCrdId(e.target.value)}
-                  fullWidth
-                  helperText="Identificador único del CRD"
-                />
-              </Box>
-              <Box width="48%">
-                <TextField
-                  required
-                  id="textField-patient"
-                  label="Identificador Paciente"
-                  variant="outlined"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  fullWidth
-                  helperText="Identificador único del paciente"
-                />
-              </Box>
-            </Stack>
-          )}
+        {crdId !== null && ( // Only render when data is available
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ marginTop: 2 }}
+          >
+            <Box width="48%">
+              <TextField
+                required
+                id="textField-crd"
+                label="Identificador CRD"
+                variant="outlined"
+                value={crdId}
+                onChange={(e) => setCrdId(e.target.value)}
+                fullWidth
+                helperText="Identificador único del CRD"
+              />
+            </Box>
+          </Stack>
+        )}
       </Container>
       <Footer />
     </Container>

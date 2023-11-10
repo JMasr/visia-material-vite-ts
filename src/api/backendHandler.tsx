@@ -134,16 +134,14 @@ class BackendHandler {
 
   public async sendVideoToServer(
     crdId: string,
-    patientId: string,
     videoBlob: Blob
   ): Promise<boolean> {
     // Prepare the payload and send it to the server
     const date = new Date().toLocaleString();
-    const videoName = "sesion_" + patientId + "_" + date + "_.webm";
+    const videoName = "sesion_" + crdId + "_" + date + "_.webm";
     // Make the payload
     const payload = new FormData();
     payload.append("crd_id", crdId);
-    payload.append("patient_id", patientId);
     payload.append("video", videoBlob);
     payload.append("video_name", videoName);
     payload.append("date", date);
