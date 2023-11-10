@@ -296,7 +296,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             justifyContent="space-between"
             sx={{ marginTop: 2 }}
           >
-            <Box width="48%">
+            <Box width="76%">
               <TextField
                 required
                 id="textField-crd"
