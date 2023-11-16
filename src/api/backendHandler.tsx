@@ -191,7 +191,7 @@ class BackendHandler {
   }
 
   public async getPreviewPicture(): Promise<any> {
-    const url = `${this.baseUrl}/digicam/preview`;
+    const url = `${this.baseUrl}/video/digicam/preview`;
 
     try {
       const response = await fetch(url);

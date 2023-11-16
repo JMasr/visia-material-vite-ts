@@ -28,6 +28,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const STOP_RECORDING_BUTTON_LABEL = "Detener Grabación";
   const PREVIEW_BUTTON_LABEL = "Previsualizar";
 
+  const NOT_SIGNAL_DEFAULT =
+    "C:Usersadmin_visiaDocumentsGitHub\visia\visia-material-vite-ts_v2publicstaticimage\not_signal_default.jpg";
   const COUNTDOWN_DURATION_SECONDS = 540; // 9 minutes in seconds
 
   // Video recording logic
