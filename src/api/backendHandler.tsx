@@ -190,6 +190,45 @@ class BackendHandler {
     }
   }
 
+  public async getPreviewPicture(): Promise<any> {
+    const url = `${this.baseUrl}/digicam/preview`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        // Handle error
+        console.error(
+          "Failed to fetch preview:",
+          response.statusText,
+          data.message
+        );
+        this.addLogFrontEnd(
+          "Failed to fetch preview: " + response.statusText,
+          false
+        );
+        return null;
+      }
+
+      // Handle success
+      console.log("Preview fetched successfully");
+      this.addLogFrontEnd("Preview fetched successfully", true);
+
+      // Extract frame data from the response
+      const frameData = data.data;
+
+      // Assuming frameData.frame_base64 contains the base64-encoded frame
+      const imageSrc = `data:image/jpeg;base64,${frameData.frame_base64}`;
+
+      return imageSrc;
+    } catch (error) {
+      console.error("Error fetching preview:", error);
+      this.addLogFrontEnd("Error fetching preview", false);
+      return null;
+    }
+  }
+
   public async sendVideoToServer(
     crdId: string,
     videoBlob: Blob

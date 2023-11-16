@@ -7,6 +7,8 @@ import Swal from "sweetalert2";
 
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
+import VideocamIcon from "@mui/icons-material/Videocam";
+
 import {
   Box,
   Button,
@@ -15,7 +17,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { c } from "vitest/dist/reporters-5f784f42";
 
 interface RecordProps {
   backendHandler: BackendHandler;
@@ -25,6 +26,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   // Define constants
   const RECORD_BUTTON_LABEL = "Grabar";
   const STOP_RECORDING_BUTTON_LABEL = "Detener Grabación";
+  const PREVIEW_BUTTON_LABEL = "Previsualizar";
+
   const COUNTDOWN_DURATION_SECONDS = 540; // 9 minutes in seconds
 
   // Video recording logic
@@ -33,8 +36,42 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  // Preview image URL
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
+
+  const handlePreview = async () => {
+    try {
+      // Call backendHandler.previewFunction() to get the preview image URL
+      const imageSrc = await backendHandler.getPreviewPicture();
+
+      if (imageSrc) {
+        // Handle the case where fetching the preview succeeded
+        setPreviewImage(imageSrc);
+      } else {
+        // Handle the case where fetching the preview failed
+        console.error("Failed to fetch preview image");
+        Swal.fire({
+          title: "Alerta!",
+          text: "No se ha podido obtener la previsualización. Por favor, revise si la cámara está encendida y con baterías.",
+          icon: "error",
+          confirmButtonText: "Vale",
+        });
+      }
+    } catch (error) {
+      // Handle other errors
+      console.error("Error handling preview:", error);
+      alert("An error occurred while handling the preview");
+      Swal.fire({
+        title: "Alerta!",
+        text: "No se ha podido obtener la previsualización. Por favor, revise si la cámara está encendida y con baterías.",
+        icon: "error",
+        confirmButtonText: "Vale",
+      });
+    }
+  };
 
   const startRecording = async () => {
     console.log("Start Recording button clicked");
@@ -111,11 +148,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         const response = await backendHandler.stopRecording(crdTextField.value);
 
         if (response) {
-          // Backend successfully stopped recording
-          setIsRecording(false);
-          setCountdown(0);
-          cancelAnimationFrame(requestRef.current!);
-
           // Log the event
           await backendHandler.addLogFrontEnd("Recording stopped", true);
           console.log("Recording stopped");
@@ -138,6 +170,10 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       } catch (error) {
         await backendHandler.addLogFrontEnd("Recording stopped", false);
         console.error("Error stopping recording:", error);
+      } finally {
+        setIsRecording(false);
+        setCountdown(0);
+        cancelAnimationFrame(requestRef.current!);
       }
     }
   };
@@ -225,6 +261,16 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         <Stack direction="row" spacing={2} alignItems="center">
           <Button
             variant="outlined"
+            startIcon={<VideocamIcon />}
+            color="secondary"
+            onClick={handlePreview}
+            disabled={isRecording}
+          >
+            {PREVIEW_BUTTON_LABEL}
+          </Button>
+
+          <Button
+            variant="outlined"
             startIcon={<RadioButtonCheckedIcon />}
             color={isRecording ? "error" : "primary"}
             onClick={isRecording ? stopRecording : startRecording}
@@ -258,7 +304,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 label="Identificador CRD"
                 variant="outlined"
                 value={crdId}
-                onChange={(e) => setCrdId(e.target.value)}
+                onChange={(e: {
+                  target: { value: React.SetStateAction<string | null> };
+                }) => setCrdId(e.target.value)}
                 fullWidth
                 helperText="Identificador único del CRD"
               />
