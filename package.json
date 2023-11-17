@@ -16,6 +16,7 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
+    "http-server": "^14.1.1",
     "react": "latest",
     "react-dom": "latest",
     "react-media-recorder": "^1.6.6",
