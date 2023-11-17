@@ -2,6 +2,8 @@ import "../App.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
+import ImageDisplay from "../components/ImageDisplay";
+import ImageRecording from "../../public/static/image/recording_default.gif";
 
 import Swal from "sweetalert2";
 
@@ -28,12 +30,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const STOP_RECORDING_BUTTON_LABEL = "Detener Grabación";
   const PREVIEW_BUTTON_LABEL = "Previsualizar";
 
-  const NOT_SIGNAL_DEFAULT =
-    "C:Usersadmin_visiaDocumentsGitHub\visia\visia-material-vite-ts_v2publicstaticimage\not_signal_default.jpg";
   const COUNTDOWN_DURATION_SECONDS = 540; // 9 minutes in seconds
 
   // Video recording logic
   const [isRecording, setIsRecording] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION_SECONDS);
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -45,6 +46,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(null);
 
   const handlePreview = async () => {
+    console.log("Preview button clicked");
+    setIsPreviewing(true);
     try {
       // Call backendHandler.previewFunction() to get the preview image URL
       const imageSrc = await backendHandler.getPreviewPicture();
@@ -72,11 +75,17 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         icon: "error",
         confirmButtonText: "Vale",
       });
+    } finally {
+      setIsPreviewing(false);
     }
   };
 
   const startRecording = async () => {
     console.log("Start Recording button clicked");
+
+    // Set image to recording image
+    setPreviewImage(ImageRecording);
+
     try {
       // Get the text field value
       const crdTextField = document.getElementById(
@@ -141,6 +150,13 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     // Check if recording is in progress before sending the stop request
     if (isRecording) {
       console.log("Stop Recording button clicked");
+
+      // Reset the states
+      setIsRecording(false);
+      setIsPreviewing(true);
+      setCountdown(0);
+      cancelAnimationFrame(requestRef.current!);
+
       try {
         const crdTextField = document.getElementById(
           "textField-crd"
@@ -173,9 +189,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         await backendHandler.addLogFrontEnd("Recording stopped", false);
         console.error("Error stopping recording:", error);
       } finally {
-        setIsRecording(false);
-        setCountdown(0);
-        cancelAnimationFrame(requestRef.current!);
+        setIsPreviewing(false);
+        setPreviewImage(null);
       }
     }
   };
@@ -256,17 +271,15 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     >
       <Header />
       <Container maxWidth="md" className="container">
-        <div className="video-container">
-          <video className="video" />
-        </div>
+        <ImageDisplay imageUrl={previewImage} />
 
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center" marginTop={2}>
           <Button
             variant="outlined"
             startIcon={<VideocamIcon />}
             color="secondary"
             onClick={handlePreview}
-            disabled={isRecording}
+            disabled={isRecording || isPreviewing}
           >
             {PREVIEW_BUTTON_LABEL}
           </Button>
@@ -276,9 +289,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             startIcon={<RadioButtonCheckedIcon />}
             color={isRecording ? "error" : "primary"}
             onClick={isRecording ? stopRecording : startRecording}
+            disabled={isPreviewing}
           >
             {isRecording ? STOP_RECORDING_BUTTON_LABEL : RECORD_BUTTON_LABEL}
           </Button>
+
           {isRecording && (
             <Box display="flex" alignItems="center" marginLeft={2}>
               <Typography variant="body1">
@@ -299,7 +314,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             justifyContent="space-between"
             sx={{ marginTop: 2 }}
           >
-            <Box width="76%">
+            <Box width="76%" hidden={isRecording || isPreviewing}>
               <TextField
                 required
                 id="textField-crd"
