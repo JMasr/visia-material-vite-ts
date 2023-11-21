@@ -44,6 +44,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
   // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
+  const [oviedoMetric, setOviedoMetric] = useState<string | null>(null);
 
   const handlePreview = async () => {
     console.log("Preview button clicked");
@@ -202,6 +203,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 confirmButtonText: "Vale",
                 timer: 10000,
               });
+
+             // Redirect to the next page
+            window.location.href = "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric
             } else {
               // Backend failed to upload video, handle error
               console.error("Backend failed to upload video:");
@@ -300,6 +304,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         if (typeof response_backend === "object" && response_backend !== null) {
           // Handle success
           setCrdId((response_backend as { crd_id: string }).crd_id);
+          setOviedoMetric((response_backend as { ov: string }).ov);
           console.log(
             "Data fetched for RecordSession successfully:",
             response_backend
