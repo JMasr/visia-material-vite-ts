@@ -83,9 +83,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const startRecording = async () => {
     console.log("Start Recording button clicked");
 
-    // Set image to recording image
-    setPreviewImage(ImageRecording);
-
     try {
       // Get the text field value
       const crdTextField = document.getElementById(
@@ -110,6 +107,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         console.log("Empty text fields");
         return;
       }
+
+      // Set image to recording image
+      setPreviewImage(ImageRecording);
 
       // Send a request to the backend to start recording
       const response = await backendHandler.startRecording();
@@ -163,12 +163,76 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         ) as HTMLInputElement;
 
         // Send a request to the backend to stop recording
-        const response = await backendHandler.stopRecording(crdTextField.value);
+        const response = await backendHandler.stopRecording();
 
         if (response) {
           // Log the event
-          await backendHandler.addLogFrontEnd("Recording stopped", true);
           console.log("Recording stopped");
+
+          // Check if there is a new video file on the backend
+          const responseNewVideo = await backendHandler.checkNewVideo();
+
+          if (responseNewVideo) {
+            // Backend successfully stopped recording
+            console.log("New video file found");
+
+            // Alert the user
+            Swal.fire({
+              title: "Hurra!",
+              text: "La grabación se ha detenido correctamente. Espere mientras se procesa el video.",
+              icon: "success",
+              confirmButtonText: "Vale",
+              timer: 10000,
+            });
+
+            // Upload the video file to the MongoDB database
+            const responseUploadVideo = await backendHandler.uploadVideo(
+              crdTextField.value
+            );
+
+            if (responseUploadVideo) {
+              // Backend successfully uploaded video
+              console.log("Video uploaded");
+
+              // Alert the user
+              Swal.fire({
+                title: "Hurra!",
+                text: "El video se ha subido correctamente.",
+                icon: "success",
+                confirmButtonText: "Vale",
+                timer: 10000,
+              });
+            } else {
+              // Backend failed to upload video, handle error
+              console.error("Backend failed to upload video:");
+              await backendHandler.addLogFrontEnd(
+                "Recording stopped - Backend error",
+                false
+              );
+              // Alert the user
+              Swal.fire({
+                title: "Alerta!",
+                text: "El video no se ha podido subir. Por favor, intentelo nuevamente.",
+                icon: "error",
+                confirmButtonText: "Vale",
+              });
+            }
+          } else {
+            // Backend failed to stop recording, handle error
+            console.error("Backend failed to stop recording:");
+            await backendHandler.addLogFrontEnd(
+              "Recording stopped - Backend error",
+              false
+            );
+
+            // Alert the user
+            Swal.fire({
+              title: "Alerta!",
+              text: "La grabación ha fallado. Por favor, intentelo nuevamente.",
+              icon: "error",
+              confirmButtonText: "Vale",
+            });
+          }
         } else {
           // Backend failed to stop recording, handle error
           console.error("Backend failed to stop recording:");

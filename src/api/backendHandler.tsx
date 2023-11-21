@@ -319,14 +319,125 @@ class BackendHandler {
     }
   }
 
-  public async stopRecording(crdId: string): Promise<boolean> {
+  public async stopRecording(): Promise<boolean> {
+    // Prepare the payload and send it to the server
+    const url = `${this.baseUrl}/video/digicam/stopVideo`;
+
+    try {
+      // Send the payload to the server
+      const response = await fetch(url);
+      try {
+        // Check the response
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Handle error
+          console.error(
+            "Failed to stop recording:",
+            response.status,
+            response.statusText
+          );
+          this.addLogFrontEnd(
+            "Failed to stop recording: " + response.statusText,
+            false
+          );
+          return false;
+        }
+
+        if (data.success) {
+          // Handle success
+          console.log("Recording stopped successfully");
+          this.addLogFrontEnd("Recording stopped successfully", true);
+
+          return true;
+        } else {
+          // Handle error
+          console.error("Failed to stop recording:", data.message);
+          this.addLogFrontEnd(
+            "Failed to stop recording: " + data.message,
+            false
+          );
+
+          return false;
+        }
+      } catch (jsonError) {
+        // Handle error
+        console.error("Error parsing JSON:", jsonError);
+        this.addLogFrontEnd("Error parsing JSON", false);
+
+        return false;
+      }
+    } catch (error) {
+      // Handle error
+      console.error("Error stopping recording:", error);
+      this.addLogFrontEnd("Error stopping recording", false);
+
+      return false;
+    }
+  }
+
+  public async checkNewVideo(): Promise<boolean> {
+    // Prepare the payload and send it to the server
+    const url = `${this.baseUrl}/file/checkFile`;
+
+    try {
+      // Send the payload to the server
+      const response = await fetch(url);
+      try {
+        // Check the response
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Handle error
+          console.error(
+            "Recording failed.",
+            response.status,
+            response.statusText
+          );
+          this.addLogFrontEnd(
+            "Recording failed: " + response.statusText,
+            false
+          );
+          return false;
+        }
+
+        if (data.success) {
+          // Handle success
+          console.log("Recording successfully");
+          this.addLogFrontEnd("Recording successfully", true);
+
+          return true;
+        } else {
+          // Handle error
+          console.error("Recording failed: ", data.message);
+          this.addLogFrontEnd("Recording failed: " + data.message, false);
+
+          return false;
+        }
+      } catch (jsonError) {
+        // Handle error
+        console.error("Error parsing JSON:", jsonError);
+        this.addLogFrontEnd("Error parsing JSON", false);
+
+        return false;
+      }
+    } catch (error) {
+      // Handle error
+      console.error("Recording failed: ", error);
+      this.addLogFrontEnd("Recording failed: ", false);
+
+      return false;
+    }
+  }
+
+  public async uploadVideo(crdId: string): Promise<boolean> {
     if (!crdId || crdId.trim() === "") {
       console.error("Invalid crdId provided:", crdId);
       this.addLogFrontEnd("Invalid crdId provided", false);
       return false;
     }
 
-    const url = `${this.baseUrl}/video/digicam/stopVideo`;
+    const url = `${this.baseUrl}/file/uploadLastCreated`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -343,37 +454,37 @@ class BackendHandler {
 
         if (!response.ok) {
           console.error(
-            "Failed to stop recording:",
+            "Failed to upload video: ",
             response.status,
             response.statusText
           );
           this.addLogFrontEnd(
-            "Failed to stop recording: " + response.statusText,
+            "Failed to upload video: " + response.statusText,
             false
           );
           return false;
         }
 
         if (data.success) {
-          console.log("Recording stopped successfully");
-          this.addLogFrontEnd("Recording stopped successfully", true);
+          console.log("Upload video successfully");
+          this.addLogFrontEnd("Upload video successfully", true);
+
           return true;
         } else {
-          console.error("Failed to stop recording:", data.message);
-          this.addLogFrontEnd(
-            "Failed to stop recording: " + data.message,
-            false
-          );
+          console.error("Failed to upload video: ", data.message);
+          this.addLogFrontEnd("Failed to upload video: " + data.message, false);
+
           return false;
         }
       } catch (jsonError) {
         console.error("Error parsing JSON:", jsonError);
         this.addLogFrontEnd("Error parsing JSON", false);
+
         return false;
       }
     } catch (error) {
-      console.error("Error stopping recording:", error);
-      this.addLogFrontEnd("Error stopping recording", false);
+      console.error("Error uploading video:", error);
+      this.addLogFrontEnd("Error uploading video", false);
       return false;
     }
   }
