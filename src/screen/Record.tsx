@@ -2,11 +2,16 @@ import "../App.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
+import ImageDisplay from "../components/ImageDisplay";
+import ImageRecording from "../../public/static/image/recording_default.gif";
+import ImageNotSignal from "../../public/static/image/not_signal_default.jpg"
 
 import Swal from "sweetalert2";
 
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
+import VideocamIcon from "@mui/icons-material/Videocam";
+
 import {
   Box,
   Button,
@@ -21,173 +26,267 @@ interface RecordProps {
 }
 
 const Record: React.FC<RecordProps> = ({ backendHandler }) => {
-  // Check if the backend is available
-  backendHandler.pollBackEnd();
-
+  // Define constants
   const RECORD_BUTTON_LABEL = "Grabar";
   const STOP_RECORDING_BUTTON_LABEL = "Detener Grabación";
+  const PREVIEW_BUTTON_LABEL = "Previsualizar";
+
+  const COUNTDOWN_DURATION_SECONDS = 540; // 9 minutes in seconds
 
   // Video recording logic
-  const COUNTDOWN_DURATION_SECONDS = 540; // 9 minutes in seconds
   const [isRecording, setIsRecording] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION_SECONDS);
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  // Preview image URL
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Render the component
-  const [crdId, setCrdId] = useState<string | null>(
-    "Por favor, introduzca el ID del CRD"
-  );
-  const [patientId, setPatientId] = useState<string | null>(
-    "Por favor, introduzca el ID del paciente"
-  );
+  const [crdId, setCrdId] = useState<string | null>(null);
+  const [oviedoMetric, setOviedoMetric] = useState<string | null>(null);
 
-  const startRecording = async () => {
-    // Get the text fields
-    const crdTextField = document.getElementById(
-      "textField-crd"
-    ) as HTMLInputElement;
-    const patientTextField = document.getElementById(
-      "textField-patient"
-    ) as HTMLInputElement;
-    // Check if the text fields are empty
-    if (crdTextField.value === "" || patientTextField.value === "") {
-      // Alert the user
+  const handlePreview = async () => {
+    console.log("Preview button clicked");
+    setIsPreviewing(true);
+    try {
+      // Call backendHandler.previewFunction() to get the preview image URL
+      const imageSrc = await backendHandler.getPreviewPicture();
+
+      if (imageSrc) {
+        // Handle the case where fetching the preview succeeded
+        setPreviewImage(imageSrc);
+      } else {
+        // Handle the case where fetching the preview failed
+        console.error("Failed to fetch preview image");
+        Swal.fire({
+          title: "Alerta!",
+          text: "No se ha podido obtener la previsualización. Por favor, revise si la cámara está encendida y con baterías.",
+          icon: "error",
+          confirmButtonText: "Vale",
+        });
+      }
+    } catch (error) {
+      // Handle other errors
+      console.error("Error handling preview:", error);
+      alert("An error occurred while handling the preview");
       Swal.fire({
         title: "Alerta!",
-        text: "Por favor, introduzca los datos de la sesión.",
-        icon: "warning",
+        text: "No se ha podido obtener la previsualización. Por favor, revise si la cámara está encendida y con baterías.",
+        icon: "error",
         confirmButtonText: "Vale",
       });
-
-      // Console log the event
-      await backendHandler.addLogFrontEnd(
-        "Recording started - Empty text fields",
-        true
-      );
-      console.log("Empty text fields");
-      return;
-    }
-
-    // All good, start recording
-    try {
-      // Console log the event
-      await backendHandler.addLogFrontEnd("Recording started", true);
-
-      // Get the patient ID from the URL
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-
-      videoRef.current!.srcObject = stream;
-      await backendHandler.addLogFrontEnd(
-        "Camera and microphone access granted",
-        true
-      );
-
-      // Initialize the MediaRecorder
-      const options = {
-        mimeType: "video/x-matroska;codecs=avc1",
-      };
-      const mediaRecorder = new MediaRecorder(stream, options);
-      await backendHandler.addLogFrontEnd("MediaRecorder initialized", true);
-
-      // Add event listener for dataavailable
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-      // Add event listener for stop
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "video/mp4" });
-        const videoUrl = URL.createObjectURL(blob);
-        console.log("Recorded video URL:", videoUrl);
-      };
-
-      // Start recording
-      mediaRecorder.start();
-      setIsRecording(true);
-      mediaRecorderRef.current = mediaRecorder;
-
-      // Start the countdown timer
-      startTimeRef.current = performance.now();
-      updateTimer();
-    } catch (error) {
-      await backendHandler.addLogFrontEnd("Recording started", false);
-      console.error("Error starting recording:", error);
+    } finally {
+      setIsPreviewing(false);
     }
   };
 
-  const stopRecording = () => {
-    // Console log the event
-    backendHandler.addLogFrontEnd("Recording stopped", true);
-
-    // Redirect to the next page
-    window.location.href =
-      "http://localhost/visiaq/preguntas/?her=y&crd=" +
-      crdId +
-      "&pid=" +
-      patientId;
+  const startRecording = async () => {
+    console.log("Start Recording button clicked");
 
     try {
-      // Stop the recording
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
+      // Get the text field value
+      const crdTextField = document.getElementById(
+        "textField-crd"
+      ) as HTMLInputElement;
 
-      // Stop the video post-recording
-      mediaRecorderRef.current?.addEventListener("stop", async () => {
-        backendHandler.addLogFrontEnd("Video recording stopped", true);
+      // Check if the text field is empty
+      if (crdTextField.value === "") {
+        // Alert the user
+        Swal.fire({
+          title: "Alerta!",
+          text: "Por favor, introduzca el CRD-ID de la sesión.",
+          icon: "warning",
+          confirmButtonText: "Vale",
+        });
 
-        // Init the video Blob
-        const blob = new Blob(chunksRef.current, { type: "video/mp4" });
-        backendHandler.addLogFrontEnd("Video Blob created", true);
-
-        // Send the video to the server
-        const response = await backendHandler.sendVideoToServer(
-          crdId!,
-          patientId!,
-          blob
+        // Log the event
+        await backendHandler.addLogFrontEnd(
+          "Recording started - Empty text fields",
+          true
         );
-        if (response) {
-          backendHandler.addLogFrontEnd("Video sent to the server", true);
-        }
-      });
-    } catch (error) {
-      chunksRef.current = [];
-      backendHandler.addLogFrontEnd("Recording fail!", false);
-      console.error("Error during recording:", error);
-    } finally {
-      // Stop the stream
-      cancelAnimationFrame(requestRef.current!);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+        console.log("Empty text fields");
+        return;
       }
-      // Empty the chunks array
-      chunksRef.current = [];
-      backendHandler.addLogFrontEnd("Chunks array emptied", true);
+
+      // Set image to recording image
+      setPreviewImage(ImageRecording);
+
+      // Send a request to the backend to start recording
+      const response = await backendHandler.startRecording();
+
+      if (response) {
+        // Backend successfully started recording
+        setIsRecording(true);
+        setCountdown(COUNTDOWN_DURATION_SECONDS);
+        startTimeRef.current = Date.now();
+        requestRef.current = requestAnimationFrame(updateTimer);
+
+        // Log the event
+        await backendHandler.addLogFrontEnd("Recording started", true);
+        console.log("Recording started");
+      } else {
+        // Backend failed to start recording, handle error
+        console.error("Backend failed to start recording:");
+        await backendHandler.addLogFrontEnd(
+          "Recording started - Backend error",
+          false
+        );
+
+        // Alert the user
+        Swal.fire({
+          title: "Alerta!",
+          text: "La grabación no se ha podido iniciar. Por favor, revise si la cámara está encendida y con baterías.",
+          icon: "error",
+          confirmButtonText: "Vale",
+        });
+
+        setPreviewImage(ImageNotSignal);
+      }
+    } catch (error) {
+      await backendHandler.addLogFrontEnd("Recording started", false);
+      console.error("Error starting recording:", error);
+      setPreviewImage(ImageNotSignal);
+    }
+  };
+
+  const stopRecording = async () => {
+    // Check if recording is in progress before sending the stop request
+    if (isRecording) {
+      console.log("Stop Recording button clicked");
+
+      // Reset the states
+      setIsRecording(false);
+      setIsPreviewing(true);
+      setCountdown(0);
+      cancelAnimationFrame(requestRef.current!);
+
+      try {
+        const crdTextField = document.getElementById(
+          "textField-crd"
+        ) as HTMLInputElement;
+
+        // Send a request to the backend to stop recording
+        const response = await backendHandler.stopRecording();
+
+        if (response) {
+          // Log the event
+          console.log("Recording stopped");
+
+          // Check if there is a new video file on the backend
+          const responseNewVideo = await backendHandler.checkNewVideo();
+
+          if (responseNewVideo) {
+            // Backend successfully stopped recording
+            console.log("New video file found");
+
+            // Alert the user
+            Swal.fire({
+              title: "Hurra!",
+              text: "La grabación se ha detenido correctamente. Espere mientras se procesa el video.",
+              icon: "success",
+              confirmButtonText: "Vale",
+              timer: 10000,
+            });
+
+            // Upload the video file to the MongoDB database
+            const responseUploadVideo = await backendHandler.uploadVideo(
+              crdTextField.value
+            );
+
+            if (responseUploadVideo) {
+              // Backend successfully uploaded video
+              console.log("Video uploaded");
+
+              // Alert the user
+              Swal.fire({
+                title: "Hurra!",
+                text: "El video se ha subido correctamente.",
+                icon: "success",
+                confirmButtonText: "Vale",
+                timer: 10000,
+              });
+
+             // Redirect to the next page
+            window.location.href = "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric
+            } else {
+              // Backend failed to upload video, handle error
+              console.error("Backend failed to upload video:");
+              await backendHandler.addLogFrontEnd(
+                "Recording stopped - Backend error",
+                false
+              );
+              // Alert the user
+              Swal.fire({
+                title: "Alerta!",
+                text: "El video no se ha podido subir. Por favor, intentelo nuevamente.",
+                icon: "error",
+                confirmButtonText: "Vale",
+              });
+            }
+          } else {
+            // Backend failed to stop recording, handle error
+            console.error("Backend failed to stop recording:");
+            await backendHandler.addLogFrontEnd(
+              "Recording stopped - Backend error",
+              false
+            );
+
+            // Alert the user
+            Swal.fire({
+              title: "Alerta!",
+              text: "La grabación ha fallado. Por favor, intentelo nuevamente.",
+              icon: "error",
+              confirmButtonText: "Vale",
+            });
+          }
+        } else {
+          // Backend failed to stop recording, handle error
+          console.error("Backend failed to stop recording:");
+          await backendHandler.addLogFrontEnd(
+            "Recording stopped - Backend error",
+            false
+          );
+
+          // Alert the user
+          Swal.fire({
+            title: "Alerta!",
+            text: "La grabación no se ha podido detener. Por favor, intentelo nuevamente.",
+            icon: "error",
+            confirmButtonText: "Vale",
+          });
+        }
+      } catch (error) {
+        await backendHandler.addLogFrontEnd("Recording stopped", false);
+        console.error("Error stopping recording:", error);
+      } finally {
+        // Reset preview states
+        setIsPreviewing(false);
+        setPreviewImage(ImageNotSignal)
+      }
     }
   };
 
   const updateTimer = () => {
-    const elapsed = performance.now() - startTimeRef.current!;
-    const newCountdown = Math.max(
-      0,
-      COUNTDOWN_DURATION_SECONDS - Math.floor(elapsed / 1000)
-    );
-    setCountdown(newCountdown);
+    try {
+      const intervalId = setInterval(() => {
+        const elapsed = Date.now() - startTimeRef.current!;
+        const newCountdown = Math.max(
+          0,
+          COUNTDOWN_DURATION_SECONDS - Math.floor(elapsed / 1000)
+        );
+        setCountdown(newCountdown);
 
-    if (newCountdown > 0) {
-      requestRef.current = requestAnimationFrame(updateTimer);
-    } else {
-      stopRecording();
+        if (newCountdown === 0 || !isRecording) {
+          // Countdown reached zero or recording stopped/interrupted
+          clearInterval(intervalId);
+          stopRecording();
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Error updating timer:", error);
+      // Handle error as needed
     }
   };
 
@@ -200,31 +299,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   };
 
   useEffect(() => {
-    const startStream = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        streamRef.current = stream;
-      } catch (error) {
-        console.error("Error starting stream:", error);
-      }
-    };
-
-    startStream();
-
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch data from the backend
@@ -232,45 +306,33 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           "/render/getRecordData"
         );
 
-        if (response_backend === null) {
-          // Handle error
-          await backendHandler.addLogFrontEnd(
-            "Data fetched for RecordSession",
-            false
-          );
-          console.error("Failed to fetch RecordSession data");
-
-          // Set default values
-          setCrdId("Por favor, introduzca el ID del CRD");
-          setPatientId("Por favor, introduzca el ID del paciente");
-        } else {
+        if (typeof response_backend === "object" && response_backend !== null) {
           // Handle success
-          setCrdId(response_backend.crd_id);
-          setPatientId(response_backend.patient_id);
-
+          setCrdId((response_backend as { crd_id: string }).crd_id);
+          setOviedoMetric((response_backend as { ov: string }).ov);
           console.log(
             "Data fetched for RecordSession successfully:",
             response_backend
           );
-          await backendHandler.addLogFrontEnd(
-            "Data fetched for RecordSession: " +
-              response_backend.crd_id +
-              " " +
-              response_backend.patient_id,
-            true
-          );
+        } else {
+          // Handle error
+          console.error("Failed to fetch RecordSession data");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        await backendHandler.addLogFrontEnd(
-          "Data fetched for RecordSession - Error RXTX",
-          false
-        );
       }
     };
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Update the timer when isRecording changes
+    if (isRecording) {
+      startTimeRef.current = Date.now();
+      updateTimer();
+    }
+  }, [isRecording]);
 
   return (
     <Container
@@ -283,19 +345,29 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     >
       <Header />
       <Container maxWidth="md" className="container">
-        <div className="video-container">
-          <video ref={videoRef} autoPlay playsInline muted className="video" />
-        </div>
+        <ImageDisplay imageUrl={previewImage} />
 
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center" marginTop={2}>
+          <Button
+            variant="outlined"
+            startIcon={<VideocamIcon />}
+            color="secondary"
+            onClick={handlePreview}
+            disabled={isRecording || isPreviewing}
+          >
+            {PREVIEW_BUTTON_LABEL}
+          </Button>
+
           <Button
             variant="outlined"
             startIcon={<RadioButtonCheckedIcon />}
             color={isRecording ? "error" : "primary"}
             onClick={isRecording ? stopRecording : startRecording}
+            disabled={isPreviewing}
           >
             {isRecording ? STOP_RECORDING_BUTTON_LABEL : RECORD_BUTTON_LABEL}
           </Button>
+
           {isRecording && (
             <Box display="flex" alignItems="center" marginLeft={2}>
               <Typography variant="body1">
@@ -308,41 +380,30 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           )}
         </Stack>
 
-        {crdId !== null &&
-          patientId !== null && ( // Only render when data is available
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ marginTop: 2 }}
-            >
-              <Box width="48%">
-                <TextField
-                  required
-                  id="textField-crd"
-                  label="Identificador CRD"
-                  variant="outlined"
-                  value={crdId}
-                  onChange={(e) => setCrdId(e.target.value)}
-                  fullWidth
-                  helperText="Identificador único del CRD"
-                />
-              </Box>
-              <Box width="48%">
-                <TextField
-                  required
-                  id="textField-patient"
-                  label="Identificador Paciente"
-                  variant="outlined"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  fullWidth
-                  helperText="Identificador único del paciente"
-                />
-              </Box>
-            </Stack>
-          )}
+        {crdId !== null && (
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ marginTop: 2 }}
+          >
+            <Box width="76%" hidden={isRecording || isPreviewing}>
+              <TextField
+                required
+                id="textField-crd"
+                label="Identificador CRD"
+                variant="outlined"
+                value={crdId}
+                onChange={(e: {
+                  target: { value: React.SetStateAction<string | null> };
+                }) => setCrdId(e.target.value)}
+                fullWidth
+                helperText="Identificador único del CRD"
+              />
+            </Box>
+          </Stack>
+        )}
       </Container>
       <Footer />
     </Container>
