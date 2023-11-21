@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
 import ImageDisplay from "../components/ImageDisplay";
 import ImageRecording from "../../public/static/image/recording_default.gif";
+import ImageNotSignal from "../../public/static/image/not_signal_default.jpg"
 
 import Swal from "sweetalert2";
 
@@ -140,10 +141,13 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           icon: "error",
           confirmButtonText: "Vale",
         });
+
+        setPreviewImage(ImageNotSignal);
       }
     } catch (error) {
       await backendHandler.addLogFrontEnd("Recording started", false);
       console.error("Error starting recording:", error);
+      setPreviewImage(ImageNotSignal);
     }
   };
 
@@ -257,8 +261,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         await backendHandler.addLogFrontEnd("Recording stopped", false);
         console.error("Error stopping recording:", error);
       } finally {
+        // Reset preview states
         setIsPreviewing(false);
-        setPreviewImage(null);
+        setPreviewImage(ImageNotSignal)
       }
     }
   };
