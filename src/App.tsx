@@ -1,17 +1,35 @@
 import "./App.css";
 import "@fontsource/roboto";
-import Record from "./screen/Record";
-import BackendHandler from "./api/backendHandler";
 import { useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+
+import Record from "./screen/Record";
+import Backup from "./screen/Backup";
+import BackendHandler from "./api/backendHandler";
 
 const baseUrl = "http://127.0.0.1:8181";
 const backendHandler = new BackendHandler(baseUrl);
 
 export default function App() {
   useEffect(() => {
-    // Call the pollBackEnd method when the component mounts
-    backendHandler.pollBackEnd();
+    const initializeBackend = async () => {
+      // Call the pollBackEnd method when the component mounts
+      await backendHandler.pollBackEnd();
+    };
+
+    initializeBackend();
   }, []);
 
-  return <Record backendHandler={backendHandler} />;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Record backendHandler={backendHandler} />} />
+        <Route
+          path="/backup"
+          element={<Backup backendHandler={backendHandler} />}
+        />
+        {/* Add more routes here as needed */}
+      </Routes>
+    </Router>
+  );
 }

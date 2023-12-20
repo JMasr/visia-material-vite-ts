@@ -488,6 +488,19 @@ class BackendHandler {
       return false;
     }
   }
+
+  public async makeBackUp(): Promise<boolean> {
+    const url = `${this.baseUrl}/backup/make`;
+    try {
+      const response = await fetch(url);
+      console.log("Response from the backend:", response);
+      return true;
+    } catch (error) {
+      console.error("Error making backup:", error);
+      this.addLogFrontEnd("Error making backup", false);
+      return false;
+    }
+  }
 }
 
 export default BackendHandler;
