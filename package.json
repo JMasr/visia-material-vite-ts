@@ -8,7 +8,7 @@
     "test": "vitest",
     "build": "tsc && vite build",
     "preview": "vite preview --port 5300",
-    "start": "http-server ./dist -p 8080"
+    "start": "tsc && vite build && serve -s ./dist -p 8080"
   },
   "dependencies": {
     "@emotion/react": "latest",
@@ -19,7 +19,9 @@
     "http-server": "^14.1.1",
     "react": "latest",
     "react-dom": "latest",
+    "react-error-boundary": "^4.0.12",
     "react-media-recorder": "^1.6.6",
+    "react-router-dom": "^6.21.0",
     "sweetalert2": "^11.7.31"
   },
   "devDependencies": {
