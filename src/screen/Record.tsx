@@ -46,7 +46,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
   // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
-  const [oviedoMetric, setOviedoMetric] = useState<string | null>(null);
+  const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
 
   // URL for redirecting after video has been uploaded
   const REDIRECT_URL =
@@ -333,13 +333,56 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         );
 
         if (typeof response_backend === "object" && response_backend !== null) {
-          // Handle success
-          setCrdId((response_backend as { crd_id: string }).crd_id);
-          setOviedoMetric((response_backend as { ov: string }).ov);
+          // Store the data fetched
+          const response_crd_id = (response_backend as { crd_id: string })
+            .crd_id;
+          const response_oviedo_metric = (response_backend as { ov: number })
+            .ov;
+
           console.log(
-            "Data fetched for RecordSession successfully:",
-            response_backend
+            "Data CRD_ID:",
+            response_crd_id,
+            "Data OVIEDO_METRIC:",
+            response_oviedo_metric
           );
+
+          // Use the callback form of state updater functions
+          setCrdId(response_crd_id);
+          setOviedoMetric(response_oviedo_metric);
+
+          // Inform the user about the result of Oviedo metric
+          if (
+            response_crd_id !== null &&
+            oviedoMetric !== null &&
+            oviedoMetric <= 2
+          ) {
+            Swal.fire({
+              title: "Test de Ovideo",
+              html:
+                "Resultado del Test de Oviedo: " +
+                "<strong>" +
+                oviedoMetric +
+                "<strong>" +
+                ".<br />Por favor, proceda a grabar la sesión.",
+              icon: "success",
+              timer: 10000,
+              confirmButtonText: "Vale",
+            });
+          } else {
+            Swal.fire({
+              title: "Test de Ovideo",
+              html:
+                "Resultado del Test de Oviedo:" +
+                oviedoMetric +
+                "<br /> Por favor, anote al paciente " +
+                "<strong>" +
+                crdId +
+                "<strong>.",
+              icon: "warning",
+              timer: 10000,
+              confirmButtonText: "Vale",
+            });
+          }
         } else {
           // Handle error
           console.error("Failed to fetch RecordSession data");
@@ -350,7 +393,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     };
 
     fetchData();
-  }, []);
+  }, [crdId, oviedoMetric]);
 
   useEffect(() => {
     // Update the timer when isRecording changes
