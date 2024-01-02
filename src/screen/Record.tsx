@@ -48,6 +48,10 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(null);
   const [oviedoMetric, setOviedoMetric] = useState<string | null>(null);
 
+  // URL for redirecting after video has been uploaded
+  const REDIRECT_URL =
+    "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric;
+
   const handlePreview = async () => {
     console.log("Preview button clicked");
     setIsPreviewing(true);
@@ -199,7 +203,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             // Backend successfully stopped recording
             console.log("New video file found");
 
-            // Alert the user
+            // Inform the user that the recording has stopped. Wait for the video to be processed
             Swal.fire({
               title: "Hurra!",
               text: "La grabación se ha detenido correctamente. Espere mientras se procesa el video.",
@@ -217,7 +221,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
               // Backend successfully uploaded video
               console.log("Video uploaded");
 
-              // Alert the user
+              // Inform the user that the video has been uploaded
               Swal.fire({
                 title: "Hurra!",
                 text: "El video se ha subido correctamente.",
@@ -226,12 +230,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 timer: 10000,
               });
 
-              // Redirect to the next page
-              window.location.href =
-                "http://localhost/visiaq/preguntas/?crd=" +
-                crdId +
-                "&ov=" +
-                oviedoMetric;
+              // Request the backend to backup the video file
+              const responseBackupVideo = await backendHandler.makeBackUp();
+
+              // Redirect after video has been uploaded
+              window.location.href = REDIRECT_URL;
             } else {
               // Backend failed to upload video, handle error
               console.error("Backend failed to upload video:");
@@ -239,7 +242,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 "Recording stopped - Backend error",
                 false
               );
-              // Alert the user
+
+              // Inform the user that the video has not been uploaded
               Swal.fire({
                 title: "Alerta!",
                 text: "El video no se ha podido subir. Por favor, intentelo nuevamente.",
@@ -255,7 +259,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
               false
             );
 
-            // Alert the user
+            // Inform the user that the recording has not been stopped
             Swal.fire({
               title: "Alerta!",
               text: "La grabación ha fallado. Por favor, intentelo nuevamente.",
@@ -271,7 +275,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             false
           );
 
-          // Alert the user
+          // Inform the user that the recording has not been stopped
           Swal.fire({
             title: "Alerta!",
             text: "La grabación no se ha podido detener. Por favor, intentelo nuevamente.",
