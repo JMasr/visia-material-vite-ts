@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
 import ImageDisplay from "../components/ImageDisplay";
 import ImageRecording from "../../public/static/image/recording_default.gif";
-import ImageNotSignal from "../../public/static/image/not_signal_default.jpg"
+import ImageNotSignal from "../../public/static/image/not_signal_default.jpg";
 
 import Swal from "sweetalert2";
 
@@ -20,6 +20,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { s } from "vitest/dist/reporters-5f784f42";
 
 interface RecordProps {
   backendHandler: BackendHandler;
@@ -45,12 +46,19 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
   // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
-  const [oviedoMetric, setOviedoMetric] = useState<string | null>(null);
+  const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
+
+  // URL for redirecting after video has been uploaded
+  const REDIRECT_URL =
+    "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric;
 
   const handlePreview = async () => {
     console.log("Preview button clicked");
     setIsPreviewing(true);
     try {
+      // Set image to recording image
+      setPreviewImage(ImageRecording);
+
       // Call backendHandler.previewFunction() to get the preview image URL
       const imageSrc = await backendHandler.getPreviewPicture();
 
@@ -66,6 +74,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           icon: "error",
           confirmButtonText: "Vale",
         });
+
+        // Reset the states
+        setPreviewImage(ImageNotSignal);
       }
     } catch (error) {
       // Handle other errors
@@ -77,6 +88,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         icon: "error",
         confirmButtonText: "Vale",
       });
+
+      // Reset the states
+      setPreviewImage(ImageNotSignal);
     } finally {
       setIsPreviewing(false);
     }
@@ -86,7 +100,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     console.log("Start Recording button clicked");
 
     try {
-      // Get the text field value
+      // Get the CRD-ID text field
       const crdTextField = document.getElementById(
         "textField-crd"
       ) as HTMLInputElement;
@@ -101,6 +115,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           confirmButtonText: "Vale",
         });
 
+        // Reset the states
+        setIsRecording(false);
+
         // Log the event
         await backendHandler.addLogFrontEnd(
           "Recording started - Empty text fields",
@@ -108,45 +125,50 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         );
         console.log("Empty text fields");
         return;
-      }
-
-      // Set image to recording image
-      setPreviewImage(ImageRecording);
-
-      // Send a request to the backend to start recording
-      const response = await backendHandler.startRecording();
-
-      if (response) {
-        // Backend successfully started recording
-        setIsRecording(true);
-        setCountdown(COUNTDOWN_DURATION_SECONDS);
-        startTimeRef.current = Date.now();
-        requestRef.current = requestAnimationFrame(updateTimer);
-
-        // Log the event
-        await backendHandler.addLogFrontEnd("Recording started", true);
-        console.log("Recording started");
       } else {
-        // Backend failed to start recording, handle error
-        console.error("Backend failed to start recording:");
-        await backendHandler.addLogFrontEnd(
-          "Recording started - Backend error",
-          false
-        );
+        console.log("CRD-ID:", crdTextField.value);
+        // Set image to recording image
+        setIsRecording(true);
+        setPreviewImage(ImageRecording);
 
-        // Alert the user
-        Swal.fire({
-          title: "Alerta!",
-          text: "La grabación no se ha podido iniciar. Por favor, revise si la cámara está encendida y con baterías.",
-          icon: "error",
-          confirmButtonText: "Vale",
-        });
+        // Send a request to the backend to start recording
+        const response = await backendHandler.startRecording();
 
-        setPreviewImage(ImageNotSignal);
+        if (response) {
+          // Backend successfully started recording
+          setCountdown(COUNTDOWN_DURATION_SECONDS);
+          startTimeRef.current = Date.now();
+          requestRef.current = requestAnimationFrame(updateTimer);
+
+          // Log the event
+          await backendHandler.addLogFrontEnd("Recording started", true);
+          console.log("Recording started");
+        } else {
+          // Backend failed to start recording, handle error
+          console.error("Backend failed to start recording:");
+          await backendHandler.addLogFrontEnd(
+            "Recording started - Backend error",
+            false
+          );
+
+          // Alert the user
+          Swal.fire({
+            title: "Alerta!",
+            text: "La grabación no se ha podido iniciar. Por favor, revise si la cámara está encendida y con baterías.",
+            icon: "error",
+            confirmButtonText: "Vale",
+          });
+
+          // Reset the states
+          setIsRecording(false);
+          setPreviewImage(ImageNotSignal);
+        }
       }
     } catch (error) {
       await backendHandler.addLogFrontEnd("Recording started", false);
       console.error("Error starting recording:", error);
+
+      // Reset the states
       setPreviewImage(ImageNotSignal);
     }
   };
@@ -181,7 +203,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             // Backend successfully stopped recording
             console.log("New video file found");
 
-            // Alert the user
+            // Inform the user that the recording has stopped. Wait for the video to be processed
             Swal.fire({
               title: "Hurra!",
               text: "La grabación se ha detenido correctamente. Espere mientras se procesa el video.",
@@ -199,7 +221,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
               // Backend successfully uploaded video
               console.log("Video uploaded");
 
-              // Alert the user
+              // Inform the user that the video has been uploaded
               Swal.fire({
                 title: "Hurra!",
                 text: "El video se ha subido correctamente.",
@@ -208,8 +230,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 timer: 10000,
               });
 
-             // Redirect to the next page
-            window.location.href = "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric
+              // Request the backend to backup the video file
+              const responseBackupVideo = await backendHandler.makeBackUp();
+
+              // Redirect after video has been uploaded
+              window.location.href = REDIRECT_URL;
             } else {
               // Backend failed to upload video, handle error
               console.error("Backend failed to upload video:");
@@ -217,7 +242,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 "Recording stopped - Backend error",
                 false
               );
-              // Alert the user
+
+              // Inform the user that the video has not been uploaded
               Swal.fire({
                 title: "Alerta!",
                 text: "El video no se ha podido subir. Por favor, intentelo nuevamente.",
@@ -233,7 +259,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
               false
             );
 
-            // Alert the user
+            // Inform the user that the recording has not been stopped
             Swal.fire({
               title: "Alerta!",
               text: "La grabación ha fallado. Por favor, intentelo nuevamente.",
@@ -249,7 +275,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             false
           );
 
-          // Alert the user
+          // Inform the user that the recording has not been stopped
           Swal.fire({
             title: "Alerta!",
             text: "La grabación no se ha podido detener. Por favor, intentelo nuevamente.",
@@ -263,7 +289,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       } finally {
         // Reset preview states
         setIsPreviewing(false);
-        setPreviewImage(ImageNotSignal)
+        setPreviewImage(ImageNotSignal);
       }
     }
   };
@@ -307,13 +333,56 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         );
 
         if (typeof response_backend === "object" && response_backend !== null) {
-          // Handle success
-          setCrdId((response_backend as { crd_id: string }).crd_id);
-          setOviedoMetric((response_backend as { ov: string }).ov);
+          // Store the data fetched
+          const response_crd_id = (response_backend as { crd_id: string })
+            .crd_id;
+          const response_oviedo_metric = (response_backend as { ov: number })
+            .ov;
+
           console.log(
-            "Data fetched for RecordSession successfully:",
-            response_backend
+            "Data CRD_ID:",
+            response_crd_id,
+            "Data OVIEDO_METRIC:",
+            response_oviedo_metric
           );
+
+          // Use the callback form of state updater functions
+          setCrdId(response_crd_id);
+          setOviedoMetric(response_oviedo_metric);
+
+          // Inform the user about the result of Oviedo metric
+          if (
+            response_crd_id !== null &&
+            oviedoMetric !== null &&
+            oviedoMetric <= 2
+          ) {
+            Swal.fire({
+              title: "Test de Ovideo",
+              html:
+                "Resultado del Test de Oviedo: " +
+                "<strong>" +
+                oviedoMetric +
+                "<strong>" +
+                ".<br />Por favor, proceda a grabar la sesión.",
+              icon: "success",
+              timer: 10000,
+              confirmButtonText: "Vale",
+            });
+          } else {
+            Swal.fire({
+              title: "Test de Ovideo",
+              html:
+                "Resultado del Test de Oviedo:" +
+                oviedoMetric +
+                "<br /> Por favor, anote al paciente " +
+                "<strong>" +
+                crdId +
+                "<strong>.",
+              icon: "warning",
+              timer: 10000,
+              confirmButtonText: "Vale",
+            });
+          }
         } else {
           // Handle error
           console.error("Failed to fetch RecordSession data");
@@ -324,7 +393,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
     };
 
     fetchData();
-  }, []);
+  }, [crdId, oviedoMetric]);
 
   useEffect(() => {
     // Update the timer when isRecording changes
@@ -343,7 +412,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         minHeight: "100vh", // Ensure the container takes full height of the viewport
       }}
     >
-      <Header />
+      <Header headerText="Visia - Grabaciones de sesiones." />
       <Container maxWidth="md" className="container">
         <ImageDisplay imageUrl={previewImage} />
 
@@ -363,7 +432,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
             startIcon={<RadioButtonCheckedIcon />}
             color={isRecording ? "error" : "primary"}
             onClick={isRecording ? stopRecording : startRecording}
-            disabled={isPreviewing}
+            disabled={isPreviewing || !crdId}
           >
             {isRecording ? STOP_RECORDING_BUTTON_LABEL : RECORD_BUTTON_LABEL}
           </Button>
