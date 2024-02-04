@@ -48,6 +48,9 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(null);
   const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
 
+  // Define a separate state for controlling the TextField value
+  const [textFieldValue, setTextFieldValue] = useState<string | null>(null);
+
   // URL for redirecting after video has been uploaded
   const REDIRECT_URL =
     "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric;
@@ -349,6 +352,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           // Use the callback form of state updater functions
           setCrdId(response_crd_id);
           setOviedoMetric(response_oviedo_metric);
+          setTextFieldValue(response_crd_id);          
 
           // Inform the user about the result of Oviedo metric
           if (
@@ -463,10 +467,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 id="textField-crd"
                 label="Identificador CRD"
                 variant="outlined"
-                value={crdId}
-                onChange={(e: {
-                  target: { value: React.SetStateAction<string | null> };
-                }) => setCrdId(e.target.value)}
+                value={textFieldValue}
+                onChange={(e) => setTextFieldValue(e.target.value)}
                 fullWidth
                 helperText="Identificador único del CRD"
               />
