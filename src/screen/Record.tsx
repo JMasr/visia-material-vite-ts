@@ -47,14 +47,8 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   // Render the component
   const [crdId, setCrdId] = useState<string | null>(null);
   const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
-
-  // Define a separate state for controlling the TextField value
-  const [textFieldValue, setTextFieldValue] = useState<string | null>(null);
-
-  // URL for redirecting after video has been uploaded
-  const REDIRECT_URL =
-    "http://localhost/visiaq/preguntas/?crd=" + crdId + "&ov=" + oviedoMetric;
-
+  const [textFieldValue, setTextFieldValue] = useState<string | null>("");
+  
   const handlePreview = async () => {
     console.log("Preview button clicked");
     setIsPreviewing(true);
@@ -132,6 +126,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         console.log("CRD-ID:", crdTextField.value);
         // Set image to recording image
         setIsRecording(true);
+        setCrdId(crdTextField.value);
         setPreviewImage(ImageRecording);
 
         // Send a request to the backend to start recording
@@ -191,6 +186,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         const crdTextField = document.getElementById(
           "textField-crd"
         ) as HTMLInputElement;
+        setCrdId(crdTextField.value);
 
         // Send a request to the backend to stop recording
         const response = await backendHandler.stopRecording();
@@ -237,7 +233,11 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
               const responseBackupVideo = await backendHandler.makeBackUp();
 
               // Redirect after video has been uploaded
-              window.location.href = REDIRECT_URL;
+              window.location.href =
+                "http://localhost/visiaq/preguntas/?crd=" +
+                crdTextField.value +
+                "&ov=" +
+                oviedoMetric;
             } else {
               // Backend failed to upload video, handle error
               console.error("Backend failed to upload video:");
@@ -351,6 +351,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
 
           // Use the callback form of state updater functions
           setCrdId(response_crd_id);
+          setTextFieldValue(response_crd_id);
           setOviedoMetric(response_oviedo_metric);
           setTextFieldValue(response_crd_id);          
 
@@ -400,7 +401,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   }, [crdId, oviedoMetric]);
 
   useEffect(() => {
-    // Update the timer when isRecording changes
+    // Update the crd_id when text field change
     if (isRecording) {
       startTimeRef.current = Date.now();
       updateTimer();
