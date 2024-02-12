@@ -48,7 +48,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(null);
   const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
   const [textFieldValue, setTextFieldValue] = useState<string | null>("");
-
+  
   const handlePreview = async () => {
     console.log("Preview button clicked");
     setIsPreviewing(true);
@@ -353,6 +353,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           setCrdId(response_crd_id);
           setTextFieldValue(response_crd_id);
           setOviedoMetric(response_oviedo_metric);
+          setTextFieldValue(response_crd_id);          
 
           // Inform the user about the result of Oviedo metric
           if (
