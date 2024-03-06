@@ -21,7 +21,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { s } from "vitest/dist/reporters-5f784f42";
 import RedirectButton from "../components/RedirectBotton";
 
 interface RecordProps {
