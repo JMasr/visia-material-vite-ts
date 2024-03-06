@@ -3,14 +3,15 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
 import ImageDisplay from "../components/ImageDisplay";
-import ImageRecording from "../../public/static/image/recording_default.gif";
-import ImageNotSignal from "../../public/static/image/not_signal_default.jpg";
+import ImageRecording from "../static/image/recording_default.gif";
+import ImageNotSignal from "../static/image/not_signal_default.jpg";
 
 import Swal from "sweetalert2";
 
 import React, { useEffect, useRef, useState } from "react";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import VideocamIcon from "@mui/icons-material/Videocam";
+import { Cameraswitch } from "@mui/icons-material";
 
 import {
   Box,
@@ -21,6 +22,7 @@ import {
   Typography,
 } from "@mui/material";
 import { s } from "vitest/dist/reporters-5f784f42";
+import RedirectButton from "../components/RedirectBotton";
 
 interface RecordProps {
   backendHandler: BackendHandler;
@@ -48,7 +50,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   const [crdId, setCrdId] = useState<string | null>(null);
   const [oviedoMetric, setOviedoMetric] = useState<number | null>(null);
   const [textFieldValue, setTextFieldValue] = useState<string | null>("");
-  
+
   const handlePreview = async () => {
     console.log("Preview button clicked");
     setIsPreviewing(true);
@@ -183,6 +185,7 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
       cancelAnimationFrame(requestRef.current!);
 
       try {
+        // Get the text fields
         const crdTextField = document.getElementById(
           "textField-crd"
         ) as HTMLInputElement;
@@ -353,7 +356,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           setCrdId(response_crd_id);
           setTextFieldValue(response_crd_id);
           setOviedoMetric(response_oviedo_metric);
-          setTextFieldValue(response_crd_id);          
 
           // Inform the user about the result of Oviedo metric
           if (
@@ -401,7 +403,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
   }, [crdId, oviedoMetric]);
 
   useEffect(() => {
-    // Update the crd_id when text field change
     if (isRecording) {
       startTimeRef.current = Date.now();
       updateTimer();
@@ -441,6 +442,12 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
           >
             {isRecording ? STOP_RECORDING_BUTTON_LABEL : RECORD_BUTTON_LABEL}
           </Button>
+
+          <RedirectButton
+            icon={<Cameraswitch />}
+            textFieldValue={"Web Cam"}
+            redirectUri="http://localhost:8080/webcam"
+          />
 
           {isRecording && (
             <Box display="flex" alignItems="center" marginLeft={2}>
