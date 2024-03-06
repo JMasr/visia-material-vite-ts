@@ -235,7 +235,7 @@ class BackendHandler {
   ): Promise<boolean> {
     // Prepare the payload and send it to the server
     const date = new Date().toLocaleString();
-    const videoName = "sesion_" + crdId + "_" + date + "_.webm";
+    const videoName = "webcam_session" + crdId + "_" + date + "_.webm";
     // Make the payload
     const payload = new FormData();
     payload.append("crd_id", crdId);
