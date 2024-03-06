@@ -12,7 +12,7 @@ cd visia-material-vite-ts
 Install it and run:
 
 ```bash
-npm install
+npm ic
 npm run dev
 ```
 
