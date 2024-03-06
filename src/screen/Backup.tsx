@@ -6,8 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackendHandler from "../api/backendHandler";
 import ImageDisplay from "../components/ImageDisplay";
-import backupImage from "../../public/static/image/backup.gif";
-import { c } from "vitest/dist/reporters-5f784f42";
+import backupImage from "../static/image/backup.gif";
 
 interface BackendHandlerProps {
   backendHandler: BackendHandler;

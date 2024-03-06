@@ -1,5 +1,5 @@
 import React from "react";
-import ImageNoSignal from "../../public/static/image/not_signal_default.jpg";
+import ImageNoSignal from "../static/image/not_signal_default.jpg";
 
 interface ImageDisplayProps {
   imageUrl: string | null;
