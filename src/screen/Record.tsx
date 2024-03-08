@@ -127,7 +127,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         console.log("CRD-ID:", crdTextField.value);
         // Set image to recording image
         setIsRecording(true);
-        setCrdId(crdTextField.value);
         setPreviewImage(ImageRecording);
 
         // Send a request to the backend to start recording
@@ -188,7 +187,6 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
         const crdTextField = document.getElementById(
           "textField-crd"
         ) as HTMLInputElement;
-        setCrdId(crdTextField.value);
 
         // Send a request to the backend to stop recording
         const response = await backendHandler.stopRecording();
@@ -229,17 +227,14 @@ const Record: React.FC<RecordProps> = ({ backendHandler }) => {
                 icon: "success",
                 confirmButtonText: "Vale",
                 timer: 10000,
+              }).then(() => {
+                // Redirect after video has been uploaded
+                window.location.href =
+                  "http://localhost/visiaq/preguntas/?crd=" +
+                  crdTextField.value +
+                  "&ov=" +
+                  oviedoMetric;
               });
-
-              // Request the backend to backup the video file
-              const responseBackupVideo = await backendHandler.makeBackUp();
-
-              // Redirect after video has been uploaded
-              window.location.href =
-                "http://localhost/visiaq/preguntas/?crd=" +
-                crdTextField.value +
-                "&ov=" +
-                oviedoMetric;
             } else {
               // Backend failed to upload video, handle error
               console.error("Backend failed to upload video:");

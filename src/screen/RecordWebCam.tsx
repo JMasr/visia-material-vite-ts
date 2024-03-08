@@ -92,9 +92,6 @@ const RecordWebCam: React.FC<RecordWebCamProps> = ({ backendHandler }) => {
         console.log("Empty text fields");
         return;
       } else {
-        // All good, set states
-        setCrdId(crdTextField.value);
-
         try {
           // Console log the event
           await backendHandler.addLogFrontEnd("Recording started", true);
@@ -164,7 +161,6 @@ const RecordWebCam: React.FC<RecordWebCamProps> = ({ backendHandler }) => {
         const crdTextField = document.getElementById(
           "textField-crd"
         ) as HTMLInputElement;
-        setCrdId(crdTextField.value);
 
         // Stop the recording
         mediaRecorderRef.current?.stop();
@@ -185,12 +181,23 @@ const RecordWebCam: React.FC<RecordWebCamProps> = ({ backendHandler }) => {
           );
           if (response) {
             backendHandler.addLogFrontEnd("Video sent to the server", true);
-            // Redirect to the next page
-            window.location.href =
-              "http://localhost/visiaq/preguntas/?crd=" +
-              crdTextField.value +
-              "&ov=" +
-              oviedoMetric;
+
+            // Alert the user and wait for confirmation
+            Swal.fire({
+              title: "Grabación finalizada",
+              text: "La grabación ha sido enviada al servidor.",
+              icon: "success",
+              confirmButtonText: "Vale",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // Redirect to the next page
+                window.location.href =
+                  "http://localhost/visiaq/preguntas/?crd=" +
+                  crdTextField.value +
+                  "&ov=" +
+                  oviedoMetric;
+              }
+            });
           }
         });
       } catch (error) {
