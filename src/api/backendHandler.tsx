@@ -493,8 +493,30 @@ class BackendHandler {
     const url = `${this.baseUrl}/backup/make`;
     try {
       const response = await fetch(url);
-      console.log("Response from the backend:", response);
-      return true;
+
+      if (!response.ok) {
+        console.error(
+          "Failed to make backup:",
+          response.status,
+          response.statusText
+        );
+        this.addLogFrontEnd(
+          "Failed to make backup: " + response.statusText,
+          false
+        );
+        return false;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        console.log("Backup made successfully");
+        this.addLogFrontEnd("Backup made successfully", true);
+        return true;
+      } else {
+        console.error("Failed to make backup:", data.message);
+        this.addLogFrontEnd("Failed to make backup: " + data.message, false);
+        return false;
+      }
     } catch (error) {
       console.error("Error making backup:", error);
       this.addLogFrontEnd("Error making backup", false);
