@@ -4,6 +4,9 @@
 
 This is a simple recording app to capture audio and videos from users.
 
+<img title="Visia-APP UI" src="/images/visia_ui.png" alt="Screenshot of the Visia-APP UI.">
+
+
 ## How to use
 
 Download the example [or clone the repo](https://github.com/mui/material-ui):
